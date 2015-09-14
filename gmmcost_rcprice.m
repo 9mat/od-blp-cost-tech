@@ -44,17 +44,20 @@ if any(c > Data.price)
     return;
 end
 
-e = zeros(size(c));
+part1 = zeros(size(c));
+part2 = zeros(size(c));
+
 lambdai = lambda*exp(sigmae*Data.ve);
 margin = Data.price - c;
 for f=1:max(iF)
     index = iF == f;
     si = s(index, :);
-    sv = si.*lambdai(index,:);
-    Delta = (diag(sum(sv,2)) - sv*si')/N;
-    Delta = bsxfun(@times, Delta, (margin(index).*Data.pgreal(index))');
-    e(index) = (Data.gpm(index)./Data.share(index).*sum(Delta,2)/(a*b)).^(1/b);
+    part1(index) = Data.pgreal(index).*margin(index,:).*sum(si.*lambdai(index,:),2)/N;
+    part2(index) = (lambdai(index,:).*si)*(si'*margin(index)).*Data.pgreal(index)/N;
 end
+
+c_e = -(part1-part2)./Data.share;
+e = (c_e-a)/(2*b);
 
 if any(e <= 0)
     fprintf('Negative techonology!\n');
@@ -62,16 +65,10 @@ if any(e <= 0)
     return;
 end
 
-if any(e > 1)
-    fprintf('Damaged goods!\n');
-    obj = 1e30 + sum(theta)*1e4;
-    return;
-end
 
+eb = log(Data.gpm + e);
 
-eb = log(Data.gpm) - log(e);
-
-c = c - a*e.^b + a;
+c = c - (a*e + b*e.^2);
 if any(c <= 0)
     fprintf('Negative cost after technology!\n');
     obj = 1e30 + sum(theta)*1e4;
