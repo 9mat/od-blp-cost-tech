@@ -2,12 +2,13 @@ function obj = gmmcost_rcprice(theta, Data)
 %SSQ Summary of this function goes here
 %   Detailed explanation goes here
 
-alpha = theta(end-6);
-lambda = theta(end-5);
-sigmap = theta(end-4);
-sigmae = theta(end-3);
-a = theta(end-2);
-b = theta(end-1);
+params  = getParams(theta);
+alpha   = params.alpha;
+lambda  = params.lambda;
+sigmap  = params.sigmap;
+sigmae  = params.sigmae;
+a       = params.a;
+b       = params.b;
 
 gamma = theta(end);
 
