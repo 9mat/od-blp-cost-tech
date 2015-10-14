@@ -80,7 +80,7 @@ delta = log(share) - log(outshr);
 sigma0 = rand(1, K1)*1e-2;
 
 lastdelta = delta;
-ssqgrad_monthly(sigma0', share, X1, mpd, pg, v, iT, mark);
+% ssqgrad_monthly(sigma0', share, X1, mpd, pg, v, iT, mark);
 
 %% Opti
 optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...

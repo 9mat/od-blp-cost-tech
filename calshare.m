@@ -1,10 +1,11 @@
 function s = calshare(delta, theta, Data)
 
-sigma = theta(1:end-6);
-alpha = theta(end-5);
-lambda = theta(end-4);
-sigmap = theta(end-3);
-sigmae = theta(end-2);
+
+sigma = theta(1:end-7);
+alpha = theta(end-6);
+lambda = theta(end-5);
+sigmap = theta(end-4);
+sigmae = theta(end-3);
 
 % mu(jti) = delta(jt) + sum_k sigma(k)*X(jk)*v(jki) +
 % alpha*exp(sigmap*vp(i))*price(jt)

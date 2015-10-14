@@ -3,13 +3,19 @@ function [ V ] = cov( theta, beta, Data )
 %   Detailed explanation goes here
 
     function u = residuals(theta, beta)
-        alpha = theta(end-5);
-        lambda = theta(end-4);
-        sigmap = theta(end-3);
-        sigmae = theta(end-2);
-        a = theta(end-1);
-        b = theta(end);
+        alpha = theta(end-6);
+        lambda = theta(end-5);
+        sigmap = theta(end-4);
+        sigmae = theta(end-3);
+        a = theta(end-2);
+        b = theta(end-1);
+        gamma = theta(end);
         
+        % shadow cost
+        gammaj = zeros(size(Data.price));
+        gammaj(Data.comply <= 0) = gamma;
+%         gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
+
         % invert for delta
         [delta, s] = invertshare(theta, Data);
         
@@ -18,13 +24,16 @@ function [ V ] = cov( theta, beta, Data )
         N = size(s, 2);
         alphai = alpha*exp(sigmap*Data.vprice);
         
+        shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
+
+        
         for f=1:max(iF)
             index = iF == f;
             si = s(index, :);
             ss = Data.share(index);
             sv = si.*alphai(index,:);
             Delta  = (diag(sum(sv,2)) - sv*si')/N;
-            c(index) = Data.price(index) + Delta\ss;
+            c(index) = Data.price(index) + Delta\ss - shadow_cost(index);
         end
         
         
@@ -32,7 +41,7 @@ function [ V ] = cov( theta, beta, Data )
         part2 = zeros(size(c));
         
         lambdai = lambda*exp(sigmae*Data.ve);
-        margin = Data.price - c;
+        margin = Data.price - c - shadow_cost;
         for f=1:max(iF)
             index = iF == f;
             si = s(index, :);
