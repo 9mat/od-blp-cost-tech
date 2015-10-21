@@ -3,18 +3,18 @@ function [ V ] = cov( theta, beta, Data )
 %   Detailed explanation goes here
 
     function u = residuals(theta, beta)
-        alpha = theta(end-6);
-        lambda = theta(end-5);
-        sigmap = theta(end-4);
-        sigmae = theta(end-3);
-        a = theta(end-2);
-        b = theta(end-1);
-        gamma = theta(end);
+        params = getParams(theta);
+        alpha = params.alpha;
+        lambda = params.lambda;
+        sigmap = params.sigmap;
+        sigmae = params.sigmae;
+        b = params.b;
+        gamma = params.gamma;
         
         % shadow cost
         gammaj = zeros(size(Data.price));
         gammaj(Data.comply <= 0) = gamma;
-%         gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
+        gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
 
         % invert for delta
         [delta, s] = invertshare(theta, Data);
@@ -50,9 +50,9 @@ function [ V ] = cov( theta, beta, Data )
         end
         
         c_e = -(part1-part2)./Data.share;
-        e = (c_e-a)/(2*b);
+        e = (c_e)/(2*b);
         eb = log(Data.gpm + e);
-        c = c - (a*e + b*e.^2);
+        c = c - (b*e.^2);
         y = [delta; log(c); eb];
         
         u = y - Data.X*beta;

@@ -7,7 +7,7 @@ alpha   = params.alpha;
 lambda  = params.lambda;
 sigmap  = params.sigmap;
 sigmae  = params.sigmae;
-a       = params.a;
+% a       = params.a;
 b       = params.b;
 
 gamma = theta(end);
@@ -15,7 +15,7 @@ gamma = theta(end);
 % shadow cost
 gammaj = zeros(size(Data.price));
 gammaj(Data.comply <= 0) = gamma;
-% gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
+gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
 
 % invert for delta
 [delta, s] = invertshare(theta, Data);
@@ -66,8 +66,8 @@ for f=1:max(iF)
     part2(index) = (lambdai(index,:).*si)*(si'*margin(index)).*Data.pgreal(index)/N;
 end
 
-c_e = -(part1-part2)./Data.share + gammaj;
-e = (c_e-a)/(2*b);
+c_e = -(part1-part2)./Data.share - gammaj;
+e = c_e/(2*b);
 
 if any(e < 0)
     fprintf('Negative techonology!\n');
@@ -78,7 +78,7 @@ end
 
 eb = log(Data.gpm + e);
 
-c = c - (a*e + b*e.^2);
+c = c - b*e.^2;
 if any(c <= 0)
     fprintf('Negative cost after technology!\n');
     obj = 1e30 + sum(theta)*1e4;
