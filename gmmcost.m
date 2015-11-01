@@ -17,6 +17,7 @@ margin = calmargin(s, alphai, Data.iF);
 c = Data.price - margin;
 logc = log(c);
 logc(c<=0) = -1e30;
+
 % if any(c <= 0)
 %     fprintf('Negative cost!\n');
 %     obj = 1e30;

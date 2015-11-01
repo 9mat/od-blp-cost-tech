@@ -50,24 +50,27 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc = [const pgreal hpwt weight ]; % suv truck van minivan];
+Xrc_lb = 'const pgreal hpwt weight space';
+Xrc = [const pgreal hpwt weight space]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv = [const pgreal hpwt weight suv truck van minivan];
+Xv_lb = 'const pgreal hpwt weight space suv truck van minivan';
+Xv = [const pgreal hpwt weight space suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
-Xc = [const trend log(hpwt) suv truck van minivan];
+Xc_lb = 'const trend log(hpwt) log(weight) log(space) suv truck van minivan';
+Xc = [const trend log(hpwt) log(weight) log(space) suv truck van minivan];
 Kc = size(Xc,2);
 
 % fuel-tech frontier
-Xe = [const trend log(hp) log(weight) suv truck van minivan];
+Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const hpwt space suv truck van minivan];
-Xzc = [const log(hp) log(weight) suv truck van minivan];
-Xze = [const log(hp) log(weight) suv truck van minivan];
+Xzv = [const pgreal dpm hpwt weight space suv truck van minivan];
+Xzc = [const log(hp) log(weight) log(space) suv truck van minivan];
+Xze = [const log(hp) log(weight) log(space) suv truck van minivan];
 
 for k = 1:size(Xzv,2)
     sum_firm_v(:,k) = accumarray(iF, Xzv(:,k));
@@ -87,8 +90,8 @@ end
 count_firm = sum_firm_v(iF,1);
 count_total = sum_total_v(iT,1);
 
-Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,2:end) - Xzv(:,2:end), max(count_firm - 1,1));
-Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,2:end) - sum_firm_v(iF,2:end), count_total - count_firm);
+Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,3:end) - Xzv(:,3:end), max(count_firm - 1,1));
+Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,3:end) - sum_firm_v(iF,3:end), count_total - count_firm);
 Zv = [Xzv count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
 
 Z_firm_c = bsxfun(@rdivide, sum_firm_c(iF,2:end) - Xzc(:,2:end), max(count_firm - 1,1));
@@ -149,11 +152,11 @@ b0 = -2;
 
 theta0 =    [ 
     %sigma
+    1
+    -0.06
+    -1
+    -0.2
     0.01
-    0.01
-    0.01
-    0.01
-
 %    
 %     1.5757 %sigma cartyve
 %     1.0700
@@ -161,10 +164,10 @@ theta0 =    [
 %    -0.4915
    
     % alpha lambda
-   -0.1668
-   -0.0673
-    0.01
-    0.01
+   -0.3
+   -0.2
+    0.7
+    0.3
     
 %     % a b
 % %     2.0825
@@ -175,28 +178,6 @@ theta0 =    [
 ];
 
 lastdelta = delta;
-
-%%
-theta02 =    [ 
-    %sigma
-    0.3362
-    0.0258
-    0.4837
-    0.6828
-    0
-
-%    
-%     1.5757 %sigma cartyve
-%     1.0700
-%     2.0370
-%    -0.4915
-   
-    % alpha lambda
-   -0.1668
-   -0.0673
-    0.9607
-    0.3301    
-];
 
 %% combined data
 Data.Xv = Xv;
@@ -351,8 +332,24 @@ beta = Data.A*y;
 % margin = price - c - ce - shadow_cost;
 % markup = margin./price;
 
+printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae'], 'theta');
+printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
+printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
 
 %%
 
 V = cov(theta, beta, Data);
-printmat([theta, se(1:numel(theta))], 'theta', '', 'theta se');
+se = sqrt(diag(V));
+
+beta_v = beta(1:Kv);
+beta_c = beta(Kv+1:end);
+
+se_theta = se(1:numel(theta));
+se_beta = se(numel(theta)+1:end);
+se_beta_v = se_beta(1:Kv);
+se_beta_c = se_beta(Kv+1:end);
+
+printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae'], 'theta se t');
+printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
+printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
+% printmat([theta, se(1:numel(theta))], 'theta', '', 'theta se');

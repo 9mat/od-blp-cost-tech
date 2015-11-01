@@ -4,71 +4,18 @@ function [ V ] = cov( theta, beta, Data )
 
     function u = residuals(theta, beta)
         params = getParams(theta);
-        alpha = params.alpha;
-        lambda = params.lambda;
-        sigmap = params.sigmap;
-        sigmae = params.sigmae;
-        b = params.b;
-        gamma = params.gamma;
-        
-        % shadow cost
-        gammaj = zeros(size(Data.price));
-        gammaj(Data.comply <= 0) = gamma;
-        gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
-
-        % invert for delta
         [delta, s] = invertshare(theta, Data);
-<<<<<<< HEAD
-        
-        iF = Data.iF;
-        c = zeros(size(iF));
-        N = size(s, 2);
-        alphai = alpha*exp(sigmap*Data.vprice);
-        
-        shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
-
-        
-        for f=1:max(iF)
-            index = iF == f;
-            si = s(index, :);
-            ss = Data.share(index);
-            sv = si.*alphai(index,:);
-            Delta  = (diag(sum(sv,2)) - sv*si')/N;
-            c(index) = Data.price(index) + Delta\ss - shadow_cost(index);
-        end
-        
-        
-        part1 = zeros(size(c));
-        part2 = zeros(size(c));
-        
-        lambdai = lambda*exp(sigmae*Data.ve);
-        margin = Data.price - c - shadow_cost;
-        for f=1:max(iF)
-            index = iF == f;
-            si = s(index, :);
-            part1(index) = Data.pgreal(index).*margin(index,:).*sum(si.*lambdai(index,:),2)/N;
-            part2(index) = (lambdai(index,:).*si)*(si'*margin(index)).*Data.pgreal(index)/N;
-        end
-        
-        c_e = -(part1-part2)./Data.share;
-        e = (c_e)/(2*b);
-        eb = log(Data.gpm + e);
-        c = c - (b*e.^2);
-        y = [delta; log(c); eb];
-=======
-        [c, ~, flag, errStr] = solve_cost(theta, Data, s);
-        
-        if flag < 0
-            fprintf(errStr);
-            return;
-        end
-        y = [delta; log(c)];
->>>>>>> f34bbc1... various changes  :((
-        
+        alphai = params.alpha*exp(params.sigmap*Data.vprice);
+        margin = calmargin(s, alphai, Data.iF);
+        c = Data.price - margin;
+        logc = log(c);
+        logc(c<=0) = 1e-30;        
+        y = [delta; logc];
         u = y - Data.X*beta;
     end
 
 % finite difference
+du = zeros(length(Data.price)*2, numel(theta));
 for k = 1:length(theta)
     theta1 = theta;
     theta2 = theta;
@@ -85,7 +32,7 @@ end
 
 % du/dbeta = X
 % du(:,end-1)=[];
-D = real([du Data.X]);
+D = [du Data.X];
 
 u = residuals(theta, beta);
 J = length(Data.price);
