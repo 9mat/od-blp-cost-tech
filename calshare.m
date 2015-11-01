@@ -1,34 +1,20 @@
-function s = calshare(delta, theta, Data)
+function s = calshare(delta, emu, iT)
 
-params  = getParams(theta);
-sigma   = params.sigma;
-alpha   = params.alpha;
-lambda  = params.lambda;
-sigmap  = params.sigmap;
-sigmae  = params.sigmae;
+emu = bsxfun(@times, emu, exp(delta));
+diT = diff(iT);
 
-% mu(jti) = delta(jt) + sum_k sigma(k)*X(jk)*v(jki) +
-% alpha*exp(sigmap*vp(i))*price(jt)
-mu = bsxfun(@times, sigma', Data.Xrc);
-mu = bsxfun(@times, mu, Data.v);
-mup = alpha*bsxfun(@times,exp(sigmap*Data.vprice),Data.price);
-mue = lambda*bsxfun(@times,exp(sigmae*Data.ve),Data.dpm);
-mu = squeeze(sum(mu, 2)) + mup + mue;
-mu = bsxfun(@plus, delta, mu);
-
-N = size(Data.v,3);
-iT = Data.iT;
-mxmu = zeros(max(iT), N);
-for i=1:N
-    mxmu(:,i) = accumarray(iT, mu(:,i), [], @max);
+if all(diT<=1) && all(diT>=0)
+    % if iT is in running order    
+    cdindex = [find(diff(iT)>0); length(iT)];
+    s0 = cumsum(emu);
+    s0 = diff([zeros(size(s0(1,:)));s0(cdindex,:)]) + 1;
+else
+    % if iT is not in running order
+    [ii, jj] = meshgrid(1:size(emu,2), iT);
+    ii = ii(:); jj = jj(:);
+    s0 = 1 + accumarray([jj ii], emu(:));    
 end
 
-emu2 = exp(mu - mxmu(iT,:));
-s0 = zeros(max(iT), N);
-for i=1:N
-    s0(:,i) = exp(-mxmu(:,i)) + accumarray(iT, emu2(:,i));
-end
-
-s = emu2./s0(iT,:);
+s = emu./s0(iT,:);
 
 end

@@ -80,7 +80,7 @@ lastdelta = delta;
 err = checkDeriv(sigma0', @(x) gmm(x,share,X1,v,iT,X2,Z), @(x) gmmgrad(x,share,X1,v,iT,X2,Z));
 %%
 optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
-    'maxtime', 1e5, 'derivCheck', 'on', 'solver', 'IPOPT');
+    'maxtime', 1e5, 'derivCheck', 'off', 'solver', 'IPOPT');
 Opt = opti('fun', @(sigma) gmm(sigma, share, X1, v, iT, X2, Z), 'f', @(sigma) gmmgrad(sigma, share, X1, v, iT, X2, Z), 'x0', sigma0, ...
     'lb', zeros(size(sigma0)), 'ub', 15*ones(size(sigma0)), 'options', optObj);
 

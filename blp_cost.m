@@ -1,3 +1,4 @@
+clear;
 df = importdata('..\data\od\od-annual-6.csv');
 data = df.data;
 
@@ -49,22 +50,22 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc = [const pgreal hpwt space]; % suv truck van minivan];
+Xrc = [const pgreal hpwt weight ]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv = [const pgreal hpwt space suv truck van minivan];
+Xv = [const pgreal hpwt weight suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
-Xc = [const trend log(hpwt) log(space) suv truck van minivan];
+Xc = [const trend log(hpwt) suv truck van minivan];
 Kc = size(Xc,2);
 
 % fuel-tech frontier
-Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
+Xe = [const trend log(hp) log(weight) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const pgreal/10 hpwt space suv truck van minivan];
+Xzv = [const hpwt space suv truck van minivan];
 Xzc = [const log(hp) log(weight) suv truck van minivan];
 Xze = [const log(hp) log(weight) suv truck van minivan];
 
@@ -98,8 +99,11 @@ Z_firm_e = bsxfun(@rdivide, sum_firm_e(iF,2:end) - Xze(:,2:end), max(count_firm 
 Z_rival_e = bsxfun(@rdivide, sum_total_e(iT,2:end) - sum_firm_e(iF,2:end), count_total - count_firm);
 Ze = [Xze trend/10 count_firm/10 Z_firm_e count_total/1000 Z_rival_e];
 
-Xz = blkdiag(Xv, Xc, Xe);
-Z = blkdiag(Zv, Zc, Ze);
+% Xz = blkdiag(Xv, Xc, Xe);
+% Z = blkdiag(Zv, Zc, Ze);
+
+Xz = blkdiag(Xv, Xc);
+Z = blkdiag(Zv, Zc);
 
 ZZ = Z'*Z; % GMM weighted matrix
 XZ = Xz'*Z;
@@ -145,10 +149,41 @@ b0 = -2;
 
 theta0 =    [ 
     %sigma
+    0.01
+    0.01
+    0.01
+    0.01
+
+%    
+%     1.5757 %sigma cartyve
+%     1.0700
+%     2.0370
+%    -0.4915
+   
+    % alpha lambda
+   -0.1668
+   -0.0673
+    0.01
+    0.01
+    
+%     % a b
+% %     2.0825
+%     1
+%     
+% %     (55/1000)/((1/27-1/28)*100) % shadow cost
+%     0.001
+];
+
+lastdelta = delta;
+
+%%
+theta02 =    [ 
+    %sigma
     0.3362
     0.0258
     0.4837
     0.6828
+    0
 
 %    
 %     1.5757 %sigma cartyve
@@ -160,25 +195,19 @@ theta0 =    [
    -0.1668
    -0.0673
     0.9607
-    0.3301
-    
-    % a b
-%     2.0825
-    1
-    
-%     (55/1000)/((1/27-1/28)*100) % shadow cost
-    0.55
+    0.3301    
 ];
 
-lastdelta = delta;
-
 %% combined data
+Data.Xv = Xv;
+Data.Zv = Zv;
 Data.Xrc = Xrc;
 Data.iT = iT;
 Data.iF = iF;
 Data.price = price;
 Data.share = share;
 Data.v = v(iT,1:end-2,:);
+Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
 Data.vprice = squeeze(v(iT,end-1,:)); % random draws for price
 Data.ve = squeeze(v(iT,end,:)); % random draws for dpm
 Data.A = A;
@@ -191,6 +220,8 @@ Data.pgreal = pgreal;
 Data.comply = comply;
 Data.cafestd = cafestd;
 
+
+
 %%
 % theta0 = [sigma0 alpha0 lambda0 sigmaprice0 sigmae0 a0 b0];
 solveropts = nloptset('algorithm', 'LN_BOBYQA');
@@ -200,38 +231,48 @@ optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
 optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
     'maxtime', 1e5, 'solver', 'NLOPT');
 
+% thetalb = -10*ones(size(theta0));
+% thetalb(end-1) = -10;
+% thetalb(end) = -10;
+% thetalb(end-6:end-5) = -15;
+% thetalb(end-5) = -20;
+% thetaub = 15*ones(size(theta0));
+% thetaub(end-1) = 100;
+% thetaub(end) = 10;
+
 thetalb = -10*ones(size(theta0));
-thetalb(end-1) = -10;
-thetalb(end) = -10;
-% thetalb(end-3:end-2) = 0;
-thetalb(end-6:end-5) = -15;
-thetalb(end-5) = -20;
-thetaub = 15*ones(size(theta0));
-thetaub(end-1) = 100;
-thetaub(end) = 10;
+thetaub = 10*ones(size(theta0));
 
-OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', theta0, ...
+%% Demand only
+% OptIP = opti('fun', @(x) gmm(x, Data), 'x0', theta0(1:end-2), ...
+%     'lb', thetalb(1:end-2), 'ub', thetaub(1:end-2), 'options', optObjIP);
+
+% [thetaIPdemand, fvalIP] = solve(OptIP);
+
+
+%%
+OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
 
 [thetaIP, fvalIP] = solve(OptIP);
 
-OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
+OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
 
 [thetaIP, fvalIP] = solve(OptIP);
 
-OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
-    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
-
-[thetaIP, fvalIP] = solve(OptIP);
-
-OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
-    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
-[thetaIP, fvalIP] = solve(OptIP);
-
-OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
-    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
-[thetaIP, fvalIP] = solve(OptIP);
+% OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
+%     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+% 
+% [thetaIP, fvalIP] = solve(OptIP);
+% 
+% OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
+%     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+% [thetaIP, fvalIP] = solve(OptIP);
+% 
+% OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
+%     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+% [thetaIP, fvalIP] = solve(OptIP);
 
 
 % OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
@@ -262,71 +303,56 @@ alpha = params.alpha;
 lambda = params.lambda;
 sigmap = params.sigmap;
 sigmae = params.sigmae;
-b = params.b;
-gamma = params.gamma;
+% b = params.b;
+% gamma = params.gamma;
 
 % invert for delta
 [delta, s] = invertshare(theta, Data);
 
-% shadow cost
-gammaj = zeros(size(Data.price));
-gammaj(Data.comply <= 0) = gamma;
-gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
+% % shadow cost
+% gammaj = zeros(size(Data.price));
+% gammaj(Data.comply <= 0) = gamma;
+% gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
 
-if any(delta > 1e30 | isnan(delta))
-    fprintf('Overflow in inverting shares!\n');
-    obj = 1e30 + sum(theta)*1e4;
-    return
-end
-
-iF = Data.iF;
-c = zeros(size(iF));
-N = size(s, 2);
 alphai = alpha*exp(sigmap*Data.vprice);
 
-shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
+% shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
 
-for f=1:max(iF)
-    index = iF == f;
-    si = s(index, :);
-    ss = Data.share(index);
-    sv = si.*alphai(index,:);
-    Delta  = (diag(sum(sv,2)) - sv*si')/N;
-    c(index) = Data.price(index) + Delta\ss - shadow_cost(index);
-end
+margin = calmargin(s, alphai, Data.iF);
+c = Data.price - margin;
+markup = margin./Data.price;
 
-part1 = zeros(size(c));
-part2 = zeros(size(c));
+% part1 = zeros(size(c));
+% part2 = zeros(size(c));
+% 
+% lambdai = lambda*exp(sigmae*Data.ve);
+% margin = Data.price - c - shadow_cost;
+% for f=1:max(iF)
+%     index = iF == f;
+%     si = s(index, :);
+%     part1(index) = Data.pgreal(index).*margin(index,:).*sum(si.*lambdai(index,:),2)/N;
+%     part2(index) = (lambdai(index,:).*si)*(si'*margin(index)).*Data.pgreal(index)/N;
+% end
+% 
+% c_e = -(part1-part2)./Data.share - gammaj;
+% e = c_e/(2*b);
+% 
+% eb = log(Data.gpm + e);
+% 
+% c = c - (b*e.^2);
 
-lambdai = lambda*exp(sigmae*Data.ve);
-margin = Data.price - c - shadow_cost;
-for f=1:max(iF)
-    index = iF == f;
-    si = s(index, :);
-    part1(index) = Data.pgreal(index).*margin(index,:).*sum(si.*lambdai(index,:),2)/N;
-    part2(index) = (lambdai(index,:).*si)*(si'*margin(index)).*Data.pgreal(index)/N;
-end
-
-c_e = -(part1-part2)./Data.share - gammaj;
-e = c_e/(2*b);
-
-eb = log(Data.gpm + e);
-
-c = c - (b*e.^2);
-
-y = [delta; log(c); eb];
+y = [delta; log(c)];
 beta = Data.A*y;
-gmmres = y - Data.X*beta;
-moments = gmmres'*Data.Z;
-obj = moments/Data.ZZ*moments';
+% gmmres = y - Data.X*beta;
+% moments = gmmres'*Data.Z;
+% obj = moments/Data.ZZ*moments';
 
-ce = b*e.^2;
-margin = price - c - ce - shadow_cost;
-markup = margin./price;
+% ce = b*e.^2;
+% margin = price - c - ce - shadow_cost;
+% markup = margin./price;
 
 
 %%
 
 V = cov(theta, beta, Data);
-se = sqrt((diag(V)));
-[theta, se(1:numel(theta))]
+printmat([theta, se(1:numel(theta))], 'theta', '', 'theta se');

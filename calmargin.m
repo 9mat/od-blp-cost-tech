@@ -1,17 +1,19 @@
-function margin = calmargin(s, beta, sigma, price, v, F, iF, iT)
+function margin = calmargin(s, alphai, iF)
 
-margin = zeros(size(iF));
+F = max(iF);
+J = length(iF);
+N = size(s,2);
+
+margin = zeros(J,1);
 share = mean(s,2);
-N = size(s, 2);
 
-alpha = beta(1);
-for f=1:length(F)
+sa = bsxfun(@times, s, alphai);
+% sa = bsxfun(@rdivide, sa, price);
+
+for f=1:F
     index = iF == f;
-%     alphaa = mean(alpha(index,:), 1)';
-    si = s(index, :);
-    ss = share(index);
-    Delta  = (diag(sum(si,2)) - si*si')*alpha/N;
-    margin(index) = -Delta\ss;
+    Delta = diag(mean(sa(index,:),2)) - sa(index,:)*s(index,:)'/N;
+    margin(index) = -Delta\share(index);
 end
 
 end

@@ -18,6 +18,7 @@ function [ V ] = cov( theta, beta, Data )
 
         % invert for delta
         [delta, s] = invertshare(theta, Data);
+<<<<<<< HEAD
         
         iF = Data.iF;
         c = zeros(size(iF));
@@ -54,6 +55,15 @@ function [ V ] = cov( theta, beta, Data )
         eb = log(Data.gpm + e);
         c = c - (b*e.^2);
         y = [delta; log(c); eb];
+=======
+        [c, ~, flag, errStr] = solve_cost(theta, Data, s);
+        
+        if flag < 0
+            fprintf(errStr);
+            return;
+        end
+        y = [delta; log(c)];
+>>>>>>> f34bbc1... various changes  :((
         
         u = y - Data.X*beta;
     end
@@ -63,7 +73,7 @@ for k = 1:length(theta)
     theta1 = theta;
     theta2 = theta;
     
-    epsilon = theta(k)*1e-6;
+    epsilon = theta(k)*1e-7;
     theta1(k) = theta1(k) - epsilon;
     theta2(k) = theta2(k) + epsilon;
     
