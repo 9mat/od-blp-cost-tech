@@ -60,8 +60,8 @@ Xv = [const pgreal hpwt weight space suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
-Xc_lb = 'const trend log(hpwt) log(weight) log(space) suv truck van minivan';
-Xc = [const trend log(hpwt) log(weight) log(space) suv truck van minivan];
+Xc_lb = 'const trend log(hpwt) log(weight) log(space) log(gpm) suv truck van minivan';
+Xc = [const trend log(hpwt) log(weight) log(space) log(gpm) suv truck van minivan];
 Kc = size(Xc,2);
 
 % fuel-tech frontier
@@ -352,4 +352,68 @@ se_beta_c = se_beta(Kv+1:end);
 printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae'], 'theta se t');
 printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
 printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
-% printmat([theta, se(1:numel(theta))], 'theta', '', 'theta se');
+
+%%
+J = length(price);
+res = y - Data.X*beta;
+xi = res(1:J);
+omega = res(J+1:end);
+
+%% simulate
+ns = 100;
+xis = xi(randi(J, [J,ns]));
+omegas = omega(randi(J, [J,ns]));
+ce = zeros(J,ns);
+ss = zeros(J,ns);
+ps = zeros(J, ns);
+lambdai = -lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm);
+
+Data.Xc = Xc;
+Data.Xv = Xv;
+Data.c = c;
+for i=1:ns
+    Data.xi = xis(:,i);
+    Data.omega = omegas(:,i);
+    [ps(:,i), mm, s, iter, flag] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
+    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF);
+    ss(:,i) = mean(s,2);
+    fprintf(' Simulation #%d, #iterations = %d, exit flag = %d\n', i, iter, flag);
+end
+
+%%
+index = ~isnan(ce(1,:));
+cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
+% [~, iii] = sort(cce);
+% pct = zeros(size(cce));
+% pct(iii) = (1:length(cce))'/length(cce);
+% cce = pct;
+
+torque = data(:,22);
+cdiddummies = dummyvar(cdid);
+cdiddummies(:,1) = [];
+
+xplot = sort(cce);
+colors = 'ymcrgbkp';
+for pow = 1:7
+    poly = bsxfun(@power, cce, 0:pow);
+    Xe = [log(hpwt) log(weight) log(space) suv minivan van truck cdiddummies poly];
+    ye = -log(gpm);
+    eta = (Xe'*Xe)\(Xe'*ye);
+    coef = eta(end-pow:end);
+    f = @(x) bsxfun(@power, x, 0:pow)*coef;
+    hold on; plot(xplot, f(xplot), colors(pow));
+end
+legend('1','2','3','4','5','6','7');
+
+poly = bsxfun(@power, cce, 0:3);
+Xe_lb = ['log(hpwt) log(weight) log(space) suv minivan van truck ' num2str(2:max(cdid)) ' const cce cce^2 cce^3 cce^4 cce^5'];
+Xe = [log(hpwt) log(weight) log(space) suv minivan van truck cdiddummies poly];
+ye = log(gpm);
+eta = (Xe'*Xe)\(Xe'*ye);
+res = ye - Xe*eta;
+cov_eta = var(res)*inv(Xe'*Xe);
+se_eta = sqrt(diag(cov_eta));
+printmat([eta,se_eta,eta./se_eta],'eta', Xe_lb, 'eta se t');
+
+Rsqr = 1-var(res)/var(ye);
+fprintf('** Rsqr = %f\n', Rsqr);
