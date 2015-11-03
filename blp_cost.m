@@ -26,6 +26,7 @@ minivan     = data(:,17);
 
 comply      = data(:,18);
 cafestd     = data(:,19)/1.4;
+torque      = data(:,21)/10;
 
 share       = data(:,4);
 outshr      = data(:,5);
@@ -382,22 +383,25 @@ end
 
 %%
 index = ~isnan(ce(1,:));
-cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
+cce = mean(ce(:,index),2)./mean(ss(:,index),2)./c;
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
+index = cce <= 9;
 
-torque = data(:,22);
+torque = data(:,21);
 cdiddummies = dummyvar(cdid);
 cdiddummies(:,1) = [];
 
-xplot = sort(cce);
+xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
     Xe = [log(hpwt) log(weight) log(space) suv minivan van truck cdiddummies poly];
     ye = -log(gpm);
+    Xe = Xe(index,:);
+    ye = ye(index);
     eta = (Xe'*Xe)\(Xe'*ye);
     coef = eta(end-pow:end);
     f = @(x) bsxfun(@power, x, 0:pow)*coef;
@@ -408,7 +412,7 @@ legend('1','2','3','4','5','6','7');
 poly = bsxfun(@power, cce, 0:3);
 Xe_lb = ['log(hpwt) log(weight) log(space) suv minivan van truck ' num2str(2:max(cdid)) ' const cce cce^2 cce^3 cce^4 cce^5'];
 Xe = [log(hpwt) log(weight) log(space) suv minivan van truck cdiddummies poly];
-ye = log(gpm);
+ye = -log(gpm);
 eta = (Xe'*Xe)\(Xe'*ye);
 res = ye - Xe*eta;
 cov_eta = var(res)*inv(Xe'*Xe);
@@ -417,3 +421,17 @@ printmat([eta,se_eta,eta./se_eta],'eta', Xe_lb, 'eta se t');
 
 Rsqr = 1-var(res)/var(ye);
 fprintf('** Rsqr = %f\n', Rsqr);
+
+%% hinge function
+
+hinge1 = max(cce-1, 0);
+hinge2 = max(cce-2, 0);
+hinge3 = max(cce-4, 0);
+hinge4 = max(cce-6, 0);
+hinge5 = max(cce-8, 0);
+hinges = [hinge1 hinge2 hinge3 hinge4];
+
+Xe_lb = ['log(hpwt) log(weight) log(space) suv minivan van truck ' num2str(2:max(cdid)) ' const hinge1 hinge2 hinge3 hinge4 hinge5'];
+Xe = [log(hpwt) log(weight) log(space) suv minivan van truck cdiddummies const hinges];
+ye = -log(gpm);
+[eta, se] = ols(Xe, ye, Xe_lb);
