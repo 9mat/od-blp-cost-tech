@@ -25,16 +25,22 @@ van         = data(:,16);
 minivan     = data(:,17);
 
 comply      = data(:,18);
-cafestd     = data(:,19)/1.4;
+cafestd     = data(:,19)*0.7;
+cafe        = data(:,20)*0.7;
 torque      = data(:,21)/10;
+mampg       = data(:,23);
 
 share       = data(:,4);
 outshr      = data(:,5);
 
 gpm         = 1./mpg*100; % gallons per 100 miles
 dpm         = gpm.*pgreal;
+madpm       = 1./mampg*100.*pgreal;
 hpwt        = hp./weight;
 trend       = cdid-1;
+
+cagpm       = 1./cafe*100;
+cagpmstd    = 1./cafestd*100;
 
 count = 0;
 
@@ -51,13 +57,13 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc_lb = 'const pgreal hpwt weight space';
-Xrc = [const pgreal hpwt weight space]; % suv truck van minivan];
+Xrc_lb = 'const pgreal hpwt weight madpm';
+Xrc = [const pgreal hpwt weight madpm]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv_lb = 'const pgreal hpwt weight space suv truck van minivan';
-Xv = [const pgreal hpwt weight space suv truck van minivan];
+Xv_lb = 'const pgreal hpwt weight madpm suv truck van minivan';
+Xv = [const hpwt weight madpm suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -69,7 +75,7 @@ Kc = size(Xc,2);
 Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const pgreal dpm hpwt weight space suv truck van minivan];
+Xzv = [const pgreal dpm hpwt weight madpm suv truck van minivan];
 Xzc = [const log(hp) log(weight) log(space) suv truck van minivan];
 Xze = [const log(hp) log(weight) log(space) suv truck van minivan];
 
@@ -175,7 +181,7 @@ theta0 =    [
 %     1
 %     
 % %     (55/1000)/((1/27-1/28)*100) % shadow cost
-%     0.001
+    0.0001
 ];
 
 lastdelta = delta;
@@ -201,7 +207,9 @@ Data.dpm = dpm;
 Data.pgreal = pgreal;
 Data.comply = comply;
 Data.cafestd = cafestd;
-
+Data.cafe = cafe;
+Data.cagpm = cagpm;
+Data.cagpmstd = cagpmstd;
 
 
 %%
@@ -299,7 +307,21 @@ sigmae = params.sigmae;
 alphai = alpha*exp(sigmap*Data.vprice);
 
 % shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
+binding = Data.comply == 0;
+fined = Data.comply == -1;
 
+gammai = zeros(size(Data.comply));
+gammai(binding) = params.gamma;
+gammai(fined) = params.gamma + 0.05;
+
+comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
+comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
+comply_mc2(binding) = 0;
+comply_mc = gammai.*(comply_mc1 + comply_mc2);
+
+comply_mc(isnan(comply_mc)) = 0;
+
+alphai = params.alpha*exp(params.sigmap*Data.vprice);
 margin = calmargin(s, alphai, Data.iF);
 c = Data.price - margin;
 markup = margin./Data.price;
@@ -333,7 +355,7 @@ beta = Data.A*y;
 % margin = price - c - ce - shadow_cost;
 % markup = margin./price;
 
-printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae'], 'theta');
+printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta');
 printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
 printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
 
@@ -350,7 +372,7 @@ se_beta = se(numel(theta)+1:end);
 se_beta_v = se_beta(1:Kv);
 se_beta_c = se_beta(Kv+1:end);
 
-printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae'], 'theta se t');
+printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta se t');
 printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
 printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
 
@@ -388,7 +410,7 @@ cce = mean(ce(:,index),2)./mean(ss(:,index),2)./c;
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-index = cce <= 8;
+index = cce <= 10;
 
 torque = data(:,21);
 cdiddummies = dummyvar(cdid);
@@ -398,7 +420,7 @@ xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
+    Xe = [log(hpwt) log(weight) log(space) suv minivan van truck poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
@@ -407,11 +429,11 @@ for pow = 1:7
 end
 legend('1','2','3','4','5','6','7');
 
-poly = bsxfun(@power, cce, 0:1);
-Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck ' num2str(2:max(cdid)) ' const cce cce^2 cce^3 cce^4 cce^5'];
-Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
+poly = bsxfun(@power, cce, 0:3);
+Xe_lb = ['log(hpwt) log(weight) suv minivan van truck const cce cce^2 cce^3 cce^4 cce^5'];
+Xe = [log(hpwt) log(weight) suv minivan van truck poly];
 ye = -log(gpm);
-[eta, se] = ols(Xe, ye, Xe_lb);
+[eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
 %% hinge function
 
@@ -427,4 +449,4 @@ torque = data(:,21);
 Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck ' num2str(2:max(cdid)) ' const hinge1 hinge2 hinge3 hinge4 hinge5'];
 Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies const hinges];
 ye = -log(gpm);
-[eta2, se2] = ols(Xe, ye, Xe_lb);
+[eta2, se2] = ols(Xe(index,:), ye(index), Xe_lb);
