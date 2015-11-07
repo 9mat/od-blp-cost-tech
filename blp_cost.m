@@ -412,7 +412,7 @@ cce = mean(ce(:,index),2)./mean(ss(:,index).*cs(:,index),2);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-index = cce <= 5;
+index = cce <= 100;
 
 torque = data(:,21);
 cdiddummies = dummyvar(cdid);
@@ -420,9 +420,9 @@ cdiddummies(:,1) = [];
 
 xplot = sort(cce(index));
 colors = 'ymcrgbkp';
-for pow = 2:7
+for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
