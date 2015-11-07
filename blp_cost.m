@@ -62,8 +62,8 @@ Xrc = [const pgreal hpwt weight madpm]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv_lb = 'const pgreal hpwt weight madpm suv truck van minivan';
-Xv = [const hpwt weight madpm suv truck van minivan];
+Xv_lb = 'const pgreal hpwt weight space madpm suv truck van minivan';
+Xv = [const pgreal hpwt weight space madpm suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -323,7 +323,7 @@ comply_mc(isnan(comply_mc)) = 0;
 
 alphai = params.alpha*exp(params.sigmap*Data.vprice);
 margin = calmargin(s, alphai, Data.iF);
-c = Data.price - margin;
+c = Data.price - margin + comply_mc;
 markup = margin./Data.price;
 
 % part1 = zeros(size(c));
@@ -383,12 +383,13 @@ xi = res(1:J);
 omega = res(J+1:end);
 
 %% simulate
-ns = 100;
+ns = 10;
 xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
 ce = zeros(J,ns);
 ss = zeros(J,ns);
 ps = zeros(J, ns);
+cs = zeros(J, ns);
 lambdai = -lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm);
 
 Data.Xc = Xc;
@@ -397,20 +398,21 @@ Data.c = c;
 for i=1:ns
     Data.xi = xis(:,i);
     Data.omega = omegas(:,i);
-    [ps(:,i), mm, s, iter, flag] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
-    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF);
+    [ps(:,i), mm, s, cc, iter, flag] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
+    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) - gammai.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
     ss(:,i) = mean(s,2);
+    cs(:,i) = cc;
     fprintf(' Simulation #%d, #iterations = %d, exit flag = %d\n', i, iter, flag);
 end
 
 %%
 index = ~isnan(ce(1,:));
-cce = mean(ce(:,index),2)./mean(ss(:,index),2)./c;
+cce = mean(ce(:,index),2)./mean(ss(:,index).*cs(:,index),2);
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-index = cce <= 10;
+index = cce <= 5;
 
 torque = data(:,21);
 cdiddummies = dummyvar(cdid);
@@ -418,9 +420,9 @@ cdiddummies(:,1) = [];
 
 xplot = sort(cce(index));
 colors = 'ymcrgbkp';
-for pow = 1:7
+for pow = 2:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) suv minivan van truck poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
@@ -430,8 +432,8 @@ end
 legend('1','2','3','4','5','6','7');
 
 poly = bsxfun(@power, cce, 0:3);
-Xe_lb = ['log(hpwt) log(weight) suv minivan van truck const cce cce^2 cce^3 cce^4 cce^5'];
-Xe = [log(hpwt) log(weight) suv minivan van truck poly];
+Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck const cce cce^2 cce^3 cce^4 cce^5'];
+Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 

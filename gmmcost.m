@@ -29,7 +29,7 @@ comply_mc(isnan(comply_mc)) = 0;
 
 alphai = params.alpha*exp(params.sigmap*Data.vprice);
 margin = calmargin(s, alphai, Data.iF);
-c = Data.price - margin - comply_mc;
+c = Data.price - margin + comply_mc;
 logc = log(c);
 logc(c<=0) = -1e30;
 
