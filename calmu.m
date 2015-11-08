@@ -17,8 +17,8 @@ alphai = params.alpha*exp(params.sigmap*Data.vprice);
 lambdai = params.lambda*exp(params.sigmae*Data.ve);
 
 mu = squeeze(sum(bsxfun(@times, params.sigma', Data.XrcV),2)) ...
-    + bsxfun(@times, alphai, Data.price) ...
-    + bsxfun(@times, lambdai, Data.dpm);
+    + bsxfun(@times, alphai, Data.price./Data.income09) ...
+    + bsxfun(@times, lambdai, Data.dpm./Data.income09);
 
 
 

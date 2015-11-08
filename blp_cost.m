@@ -28,6 +28,7 @@ comply      = data(:,18);
 cafestd     = data(:,19)*0.7;
 cafe        = data(:,20)*0.7;
 torque      = data(:,21)/10;
+income09    = data(:,22)/1000;
 mampg       = data(:,23);
 
 share       = data(:,4);
@@ -171,8 +172,8 @@ theta0 =    [
 %    -0.4915
    
     % alpha lambda
-   -0.3
-   -0.2
+   -0.4*36
+   -0.3*36
     0.7
     0.3
     
@@ -210,6 +211,7 @@ Data.cafestd = cafestd;
 Data.cafe = cafe;
 Data.cagpm = cagpm;
 Data.cagpmstd = cagpmstd;
+Data.income09 = income09;
 
 
 %%
@@ -230,7 +232,7 @@ optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
 % thetaub(end-1) = 100;
 % thetaub(end) = 10;
 
-thetalb = -10*ones(size(theta0));
+thetalb = -50*ones(size(theta0));
 thetaub = 10*ones(size(theta0));
 
 %% Demand only
@@ -304,8 +306,6 @@ sigmae = params.sigmae;
 % gammaj(Data.comply <= 0) = gamma;
 % gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
 
-alphai = alpha*exp(sigmap*Data.vprice);
-
 % shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
 binding = Data.comply == 0;
 fined = Data.comply == -1;
@@ -321,7 +321,7 @@ comply_mc = gammai.*(comply_mc1 + comply_mc2);
 
 comply_mc(isnan(comply_mc)) = 0;
 
-alphai = params.alpha*exp(params.sigmap*Data.vprice);
+alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
 margin = calmargin(s, alphai, Data.iF);
 c = Data.price - margin + comply_mc;
 markup = margin./Data.price;
@@ -383,31 +383,32 @@ xi = res(1:J);
 omega = res(J+1:end);
 
 %% simulate
-ns = 10;
+ns = 100;
 xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
 ce = zeros(J,ns);
 ss = zeros(J,ns);
 ps = zeros(J, ns);
 cs = zeros(J, ns);
-lambdai = -lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm);
+lambdai = -bsxfun(@rdivide, lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm), Data.income09);
 
 Data.Xc = Xc;
 Data.Xv = Xv;
 Data.c = c;
+Data.markup = markup;
 for i=1:ns
     Data.xi = xis(:,i);
     Data.omega = omegas(:,i);
-    [ps(:,i), mm, s, cc, iter, flag] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
-    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) - gammai.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
+    [ps(:,i), mm, s, cc, iter, flag, distance] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
+    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) + gammai.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
     ss(:,i) = mean(s,2);
     cs(:,i) = cc;
-    fprintf(' Simulation #%d, #iterations = %d, exit flag = %d\n', i, iter, flag);
+    fprintf(' Simulation #%d, #iterations = %d, exit flag = %d, distance = %f\n', i, iter, flag, distance);
 end
 
 %%
 index = ~isnan(ce(1,:));
-cce = mean(ce(:,index),2)./mean(ss(:,index).*cs(:,index),2);
+cce = mean(ce(:,index),2)./mean(ss(:,index),2);
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
@@ -422,7 +423,7 @@ xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
@@ -431,9 +432,9 @@ for pow = 1:7
 end
 legend('1','2','3','4','5','6','7');
 
-poly = bsxfun(@power, cce, 0:3);
-Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck const cce cce^2 cce^3 cce^4 cce^5'];
-Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
+poly = bsxfun(@power, cce, 0:4);
+Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
+Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
