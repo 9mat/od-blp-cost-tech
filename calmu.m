@@ -15,10 +15,12 @@ function mu = calmu(theta, Data )
 params = getParams(theta);
 alphai = params.alpha*exp(params.sigmap*Data.vprice);
 lambdai = params.lambda*exp(params.sigmae*Data.ve);
+lambda2i = params.lambda2*exp(params.sigmae2*Data.ve2);
 
 mu = squeeze(sum(bsxfun(@times, params.sigma', Data.XrcV),2)) ...
     + bsxfun(@times, alphai, Data.price./Data.income09) ...
-    + bsxfun(@times, lambdai, Data.dpm./Data.income09);
+    + bsxfun(@times, lambdai, Data.dpm./Data.income09) ...
+    + bsxfun(@times, lambda2i, Data.madpm./Data.income09);
 
 
 

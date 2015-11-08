@@ -58,13 +58,13 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc_lb = 'const pgreal hpwt weight madpm';
-Xrc = [const pgreal hpwt weight madpm]; % suv truck van minivan];
+Xrc_lb = 'const hpwt weight space';
+Xrc = [const hpwt weight space]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv_lb = 'const pgreal hpwt weight space madpm suv truck van minivan';
-Xv = [const pgreal hpwt weight space madpm suv truck van minivan];
+Xv_lb = 'const income09 hpwt weight space suv truck van minivan';
+Xv = [const income09 hpwt weight space suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -76,7 +76,7 @@ Kc = size(Xc,2);
 Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const pgreal dpm hpwt weight madpm suv truck van minivan];
+Xzv = [const pgreal income09 dpm hpwt weight madpm./income09 suv truck van minivan];
 Xzc = [const log(hp) log(weight) log(space) suv truck van minivan];
 Xze = [const log(hp) log(weight) log(space) suv truck van minivan];
 
@@ -98,8 +98,8 @@ end
 count_firm = sum_firm_v(iF,1);
 count_total = sum_total_v(iT,1);
 
-Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,3:end) - Xzv(:,3:end), max(count_firm - 1,1));
-Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,3:end) - sum_firm_v(iF,3:end), count_total - count_firm);
+Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,4:end) - Xzv(:,4:end), max(count_firm - 1,1));
+Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,4:end) - sum_firm_v(iF,4:end), count_total - count_firm);
 Zv = [Xzv count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
 
 Z_firm_c = bsxfun(@rdivide, sum_firm_c(iF,2:end) - Xzc(:,2:end), max(count_firm - 1,1));
@@ -123,7 +123,7 @@ A = (XZZZ*XZ')\XZZZ*Z';
 
 
 %% random draws
-halton_dim  = (Krc+2)*nT; % last one is for price
+halton_dim  = (Krc+3)*nT; % last one is for price
 halton_skip = 1000;
 halton_leap = 100;
 halton_scramble    = 'RR2';
@@ -132,7 +132,7 @@ tempDraw    = scramble(tempDraw, halton_scramble);
     
 % Make uniform draws
 draws       = net(tempDraw, N);
-v           = reshape(draws, [N nT (Krc+2)]);
+v           = reshape(draws, [N nT (Krc+3)]);
 v           = permute(v, [2 3 1]);
 v           = norminv(v);
 
@@ -161,28 +161,29 @@ b0 = -2;
 theta0 =    [ 
     %sigma
     1
-    -0.06
     -1
     -0.2
-    0.01
+    0.1
 %    
 %     1.5757 %sigma cartyve
 %     1.0700
 %     2.0370
 %    -0.4915
    
-    % alpha lambda
-   -0.4*36
-   -0.3*36
+    % alpha lambda lambda2
+   -0.4*66
+   -0.3*66
+   0.1*66
     0.7
     0.3
+    0.1
     
 %     % a b
 % %     2.0825
 %     1
 %     
 % %     (55/1000)/((1/27-1/28)*100) % shadow cost
-    0.0001
+    0.3
 ];
 
 lastdelta = delta;
@@ -195,10 +196,11 @@ Data.iT = iT;
 Data.iF = iF;
 Data.price = price;
 Data.share = share;
-Data.v = v(iT,1:end-2,:);
+Data.v = v(iT,1:end-3,:);
 Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
 Data.vprice = squeeze(v(iT,end-1,:)); % random draws for price
 Data.ve = squeeze(v(iT,end,:)); % random draws for dpm
+Data.ve2 = squeeze(v(iT,end-2,:)); % random draws for dpm
 Data.A = A;
 Data.X = Xz;
 Data.Z = Z;
@@ -211,6 +213,7 @@ Data.cafestd = cafestd;
 Data.cafe = cafe;
 Data.cagpm = cagpm;
 Data.cagpmstd = cagpmstd;
+Data.madpm = madpm;
 Data.income09 = income09;
 
 
@@ -233,7 +236,7 @@ optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
 % thetaub(end) = 10;
 
 thetalb = -50*ones(size(theta0));
-thetaub = 10*ones(size(theta0));
+thetaub = 50*ones(size(theta0));
 
 %% Demand only
 % OptIP = opti('fun', @(x) gmm(x, Data), 'x0', theta0(1:end-2), ...
@@ -355,10 +358,10 @@ beta = Data.A*y;
 % margin = price - c - ce - shadow_cost;
 % markup = margin./price;
 
-printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta');
-printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
-printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
-
+% printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta');
+% printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
+% printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
+% 
 %%
 
 V = cov(theta, beta, Data);
@@ -372,7 +375,7 @@ se_beta = se(numel(theta)+1:end);
 se_beta_v = se_beta(1:Kv);
 se_beta_c = se_beta(Kv+1:end);
 
-printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta se t');
+printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda lambda2 sigmap sigmae sigmae2 gamma'], 'theta se t');
 printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
 printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
 
