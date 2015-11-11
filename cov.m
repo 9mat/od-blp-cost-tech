@@ -21,7 +21,7 @@ function [ V ] = cov( theta, beta, Data )
         
         comply_mc(isnan(comply_mc)) = 0;
                 
-        alphai = params.alpha*exp(params.sigmap*Data.vprice);
+        alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
         margin = calmargin(s, alphai, Data.iF);
         c = Data.price - margin - comply_mc;
         logc = log(c);

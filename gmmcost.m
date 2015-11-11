@@ -18,7 +18,7 @@ fined = Data.comply == -1;
 
 gammai = zeros(size(Data.comply));
 gammai(binding) = params.gamma;
-gammai(fined) = params.gamma + 0.05;
+gammai(fined) = params.gamma + 0.055;
 
 comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
 comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;

@@ -1,3 +1,5 @@
+diary diary.txt;
+diary on;
 clear;
 df = importdata('..\data\od\od-annual-6.csv');
 data = df.data;
@@ -27,9 +29,11 @@ minivan     = data(:,17);
 comply      = data(:,18);
 cafestd     = data(:,19)*0.7;
 cafe        = data(:,20)*0.7;
-torque      = data(:,21)/10;
+torque      = data(:,21)/100;
 income09    = data(:,22)/1000;
 mampg       = data(:,23);
+gdppc       = data(:,22)/1000;
+height      = data(:,25);
 
 share       = data(:,4);
 outshr      = data(:,5);
@@ -58,13 +62,13 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc_lb = 'const pgreal hpwt weight madpm';
-Xrc = [const pgreal hpwt weight madpm]; % suv truck van minivan];
+Xrc_lb = 'const pgreal hpwt weight space';
+Xrc = [const pgreal hpwt weight space]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
-Xv_lb = 'const pgreal hpwt weight space madpm suv truck van minivan';
-Xv = [const pgreal hpwt weight space madpm suv truck van minivan];
+Xv_lb = 'const madpm pgreal hpwt weight space suv truck van minivan';
+Xv = [const madpm./income09 pgreal hpwt weight space suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -76,7 +80,7 @@ Kc = size(Xc,2);
 Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const pgreal dpm hpwt weight madpm suv truck van minivan];
+Xzv = [const dpm hpwt space torque weight suv truck van minivan];
 Xzc = [const log(hp) log(weight) log(space) suv truck van minivan];
 Xze = [const log(hp) log(weight) log(space) suv truck van minivan];
 
@@ -98,12 +102,14 @@ end
 count_firm = sum_firm_v(iF,1);
 count_total = sum_total_v(iT,1);
 
-Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,3:end) - Xzv(:,3:end), max(count_firm - 1,1));
-Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,3:end) - sum_firm_v(iF,3:end), count_total - count_firm);
-Zv = [Xzv count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
+st = 2;
+Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,st:end) - Xzv(:,st:end), max(count_firm - 1,1));
+Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,st:end) - sum_firm_v(iF,st:end), count_total - count_firm);
+Zv = [Xzv gdppc pgreal cafestd.*comply count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
 
-Z_firm_c = bsxfun(@rdivide, sum_firm_c(iF,2:end) - Xzc(:,2:end), max(count_firm - 1,1));
-Z_rival_c = bsxfun(@rdivide, sum_total_c(iT,2:end) - sum_firm_c(iF,2:end), count_total - count_firm);
+st = 2;
+Z_firm_c = bsxfun(@rdivide, sum_firm_c(iF,st:end) - Xzc(:,st:end), max(count_firm - 1,1));
+Z_rival_c = bsxfun(@rdivide, sum_total_c(iT,st:end) - sum_firm_c(iF,st:end), count_total - count_firm);
 Zc = [Xzc trend/10 count_firm/10 Z_firm_c count_total/1000 Z_rival_c];
 
 Z_firm_e = bsxfun(@rdivide, sum_firm_e(iF,2:end) - Xze(:,2:end), max(count_firm - 1,1));
@@ -161,10 +167,10 @@ b0 = -2;
 theta0 =    [ 
     %sigma
     1
-    -0.06
+    0.1
     -1
     -0.2
-    0.01
+    0.1
 %    
 %     1.5757 %sigma cartyve
 %     1.0700
@@ -172,17 +178,17 @@ theta0 =    [
 %    -0.4915
    
     % alpha lambda
-   -0.4*36
-   -0.3*36
-    0.7
-    0.3
+   -0.4*66
+   -0.3*66
+    1
+    1
     
 %     % a b
 % %     2.0825
 %     1
 %     
 % %     (55/1000)/((1/27-1/28)*100) % shadow cost
-    0.0001
+    0.1
 ];
 
 lastdelta = delta;
@@ -232,8 +238,8 @@ optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
 % thetaub(end-1) = 100;
 % thetaub(end) = 10;
 
-thetalb = -50*ones(size(theta0));
-thetaub = 10*ones(size(theta0));
+thetalb = -100*ones(size(theta0));
+thetaub = 50*ones(size(theta0));
 
 %% Demand only
 % OptIP = opti('fun', @(x) gmm(x, Data), 'x0', theta0(1:end-2), ...
@@ -248,10 +254,26 @@ OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
 
 [thetaIP, fvalIP] = solve(OptIP);
 
+thetaIP = thetaIP.*(1 + (rand(size(thetaIP))-0.5)*0.2);
 OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
 
-[thetaIP, fvalIP] = solve(OptIP);
+[thetaIP2, fvalIP2] = solve(OptIP);
+if fvalIP2 < fvalIP; thetaIP = thetaIP2; end
+
+thetaIP = thetaIP.*(1 + (rand(size(thetaIP))-0.5)*0.2);
+OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
+    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+
+[thetaIP2, fvalIP2] = solve(OptIP);
+if fvalIP2 < fvalIP; thetaIP = thetaIP2; end
+
+thetaIP = thetaIP.*(1 + (rand(size(thetaIP))-0.5)*0.2);
+OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
+    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+
+[thetaIP2, fvalIP2] = solve(OptIP);
+if fvalIP2 < fvalIP; thetaIP = thetaIP2; end
 
 % OptIP = opti('fun', @(x) gmmcost_rcprice(x, Data), 'x0', thetaIP, ...
 %     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
@@ -312,7 +334,7 @@ fined = Data.comply == -1;
 
 gammai = zeros(size(Data.comply));
 gammai(binding) = params.gamma;
-gammai(fined) = params.gamma + 0.05;
+gammai(fined) = params.gamma + 0.055;
 
 comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
 comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
@@ -355,9 +377,9 @@ beta = Data.A*y;
 % margin = price - c - ce - shadow_cost;
 % markup = margin./price;
 
-printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta');
-printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
-printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
+% printmat(theta, 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta');
+% printmat(beta(1:Kv), 'beta_v', Xv_lb, 'beta_v');
+% printmat(beta(1:Kc), 'beta_c', Xc_lb, 'beta_c');
 
 %%
 
@@ -376,6 +398,7 @@ printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigma
 printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
 printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
 
+diary off;
 %%
 J = length(price);
 res = y - Data.X*beta;
@@ -408,12 +431,14 @@ end
 
 %%
 index = ~isnan(ce(1,:));
-cce = mean(ce(:,index),2)./mean(ss(:,index),2);
+cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-index = cce <= 100;
+trim05 = prctile(cce, 5);
+trim95 = prctile(cce, 95);
+index = (cce > trim05) & (cce < trim95);
 
 torque = data(:,21);
 cdiddummies = dummyvar(cdid);
@@ -423,7 +448,7 @@ xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck trend poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
@@ -438,12 +463,13 @@ Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddu
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
+
 %% hinge function
 
-hinge1 = max(cce-2, 0);
-hinge2 = max(cce-4, 0);
-hinge3 = max(cce-8, 0);
-hinge4 = max(cce-8, 0);
+hinge1 = max(cce-10, 0);
+hinge2 = max(cce-30, 0);
+hinge3 = max(cce-60, 0);
+hinge4 = max(cce-80, 0);
 hinge5 = max(cce-6, 0);
 hinge6 = max(cce-8, 0);
 hinges = [hinge1 hinge2 hinge3];
