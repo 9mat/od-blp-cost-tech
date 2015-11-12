@@ -409,31 +409,9 @@ omega = res(J+1:end);
 ns = 100;
 xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
-ce = zeros(J,ns);
-ss = zeros(J,ns);
-ps = zeros(J, ns);
-
-lambdai = -bsxfun(@rdivide, lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm), Data.income09);
-
-Data.Xc = Xc;
-Data.Xv = Xv;
-
-deltas = bsxfun(@plus, Xv*beta_v, xis);
-cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
-
-Data.markup = markup;
-for i=1:ns
-    Data.xi = xis(:,i);
-    Data.omega = omegas(:,i);
-    [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), comply_mc, Data, price);
-    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) + gammai.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
-    ss(:,i) = mean(s,2);
-    fprintf(' Simulation #%d, #iterations = %d, exit flag = %d, distance = %f\n', i, iter, flag, distance);
-end
+cce = calcce(theta, beta_v, beta_c, xis, omegas, Data);
 
 %%
-index = all(~isnan(ps),1);
-cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
@@ -450,7 +428,7 @@ xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);

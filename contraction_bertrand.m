@@ -38,8 +38,12 @@ while ~convergence
     distance = max(abs(r));
     convergence = distance < toler;
     iter = iter + 1;
+        
+    if any(isnan(p))
+        p = p0.*(1 + (rand(size(p))-0.5)*0.2);
+    end
     
-    if any(isnan(p)) || iter > maxiter
+    if iter > maxiter
         p = NaN(size(p));
         flag = -1;
         return;
