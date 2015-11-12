@@ -12,7 +12,7 @@ function [ V ] = cov( theta, beta, Data )
         
         gammai = zeros(size(Data.comply));
         gammai(binding) = params.gamma;
-        gammai(fined) = params.gamma + 0.05;
+        gammai(fined) = params.gamma + 0.055/2;
         
         comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
         comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
@@ -21,7 +21,7 @@ function [ V ] = cov( theta, beta, Data )
         
         comply_mc(isnan(comply_mc)) = 0;
                 
-        alphai = params.alpha*exp(params.sigmap*Data.vprice);
+        alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
         margin = calmargin(s, alphai, Data.iF);
         c = Data.price - margin - comply_mc;
         logc = log(c);

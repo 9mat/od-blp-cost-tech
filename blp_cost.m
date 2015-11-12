@@ -64,7 +64,7 @@ Krc = size(Xrc,2);
 
 % mean utility coefficients
 Xv_lb = 'const income09 hpwt weight space suv truck van minivan';
-Xv = [const income09 hpwt weight space suv truck van minivan];
+Xv = [const hpwt weight space suv truck van minivan];
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -76,7 +76,7 @@ Kc = size(Xc,2);
 Xe = [const trend log(hp) log(weight) log(space) suv truck van minivan];
 Ke = size(Xe,2);
 
-Xzv = [const pgreal income09 dpm hpwt weight madpm./income09 suv truck van minivan];
+Xzv = [const dpm hpwt space torque weight suv truck van minivan];
 Xzc = [const log(hp) log(weight) log(space) suv truck van minivan];
 Xze = [const log(hp) log(weight) log(space) suv truck van minivan];
 
@@ -98,13 +98,13 @@ end
 count_firm = sum_firm_v(iF,1);
 count_total = sum_total_v(iT,1);
 
-Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,4:end) - Xzv(:,4:end), max(count_firm - 1,1));
-Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,4:end) - sum_firm_v(iF,4:end), count_total - count_firm);
-Zv = [Xzv count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
+Z_firm_v = bsxfun(@rdivide, sum_firm_v(iF,2:end) - Xzv(:,2:end), max(count_firm - 1,1));
+Z_rival_v = bsxfun(@rdivide, sum_total_v(iT,2:end) - sum_firm_v(iF,2:end), count_total - count_firm);
+Zv = [Xzv pgreal cafestd.*comply count_firm/10 Z_firm_v count_total/1000 Z_rival_v];
 
 Z_firm_c = bsxfun(@rdivide, sum_firm_c(iF,2:end) - Xzc(:,2:end), max(count_firm - 1,1));
 Z_rival_c = bsxfun(@rdivide, sum_total_c(iT,2:end) - sum_firm_c(iF,2:end), count_total - count_firm);
-Zc = [Xzc trend/10 count_firm/10 Z_firm_c count_total/1000 Z_rival_c];
+Zc = [Xzc log(gpm) trend/10 count_firm/10 Z_firm_c count_total/1000 Z_rival_c];
 
 Z_firm_e = bsxfun(@rdivide, sum_firm_e(iF,2:end) - Xze(:,2:end), max(count_firm - 1,1));
 Z_rival_e = bsxfun(@rdivide, sum_total_e(iT,2:end) - sum_firm_e(iF,2:end), count_total - count_firm);
@@ -315,7 +315,7 @@ fined = Data.comply == -1;
 
 gammai = zeros(size(Data.comply));
 gammai(binding) = params.gamma;
-gammai(fined) = params.gamma + 0.05;
+gammai(fined) = params.gamma + 0.055/2;
 
 comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
 comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
@@ -389,34 +389,37 @@ omega = res(J+1:end);
 ns = 100;
 xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
+
 ce = zeros(J,ns);
 ss = zeros(J,ns);
 ps = zeros(J, ns);
-cs = zeros(J, ns);
 lambdai = -bsxfun(@rdivide, lambda*bsxfun(@times, exp(sigmae*Data.ve), Data.dpm), Data.income09);
 
 Data.Xc = Xc;
 Data.Xv = Xv;
 Data.c = c;
 Data.markup = markup;
+
+cs = exp(bsxfun(@plus, Data.Xc*beta_c, omegas));
+deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
+
 for i=1:ns
-    Data.xi = xis(:,i);
-    Data.omega = omegas(:,i);
-    [ps(:,i), mm, s, cc, iter, flag, distance] = contraction_bertrand(theta, beta_v, beta_c, Data, price);
+    [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), comply_mc, Data, price);
     ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) + gammai.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
     ss(:,i) = mean(s,2);
-    cs(:,i) = cc;
     fprintf(' Simulation #%d, #iterations = %d, exit flag = %d, distance = %f\n', i, iter, flag, distance);
 end
 
 %%
 index = ~isnan(ce(1,:));
-cce = mean(ce(:,index),2)./mean(ss(:,index),2);
+cce = (mean(ce(:,index),2)./mean(ss(:,index),2)/10);
 % [~, iii] = sort(cce);
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-index = cce <= 100;
+trim05 = prctile(cce, 5);
+trim95 = prctile(cce, 95);
+index = (cce > trim05) & (cce < trim95);
 
 torque = data(:,21);
 cdiddummies = dummyvar(cdid);
@@ -426,7 +429,7 @@ xplot = sort(cce(index));
 colors = 'ymcrgbkp';
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
     coef = eta(end-pow:end);
