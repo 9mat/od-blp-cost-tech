@@ -1,4 +1,4 @@
-function margin = calmargin(s, alphai, iF)
+function [margin, flag] = calmargin(s, alphai, iF)
 
 F = max(iF);
 J = length(iF);
@@ -11,10 +11,17 @@ sa = bsxfun(@times, s, alphai);
 meansa = mean(sa,2);
 % sa = bsxfun(@rdivide, sa, price);
 
+flag = true;
 for f=1:F
     index = iF == f;
     Delta = diag(meansa(index,:)) - sa(index,:)*s(index,:)'/N;
+    singular = rcond(Delta);
+    if (singular < eps) || isnan(singular)
+        flag = false;
+        break;
+    end
     margin(index) = -Delta\share(index);
+    
 end
 
 end

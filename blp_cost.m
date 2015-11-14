@@ -406,10 +406,14 @@ xi = res(1:J);
 omega = res(J+1:end);
 
 %% simulate
-ns = 100;
+ns = 5;
 xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
-cce = calcce(theta, beta_v, beta_c, xis, omegas, Data);
+
+deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
+cs = bsxfun(@minus, exp(bsxfun(@plus, Xc*beta_c, omegas)), comply_mc);
+
+[cce, ps] = calcce(theta, deltas, cs, Data);
 
 %%
 % [~, iii] = sort(cce);
@@ -443,6 +447,16 @@ Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddu
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
+%%
+% Data.pgreal = pgreal*0.99;
+% Data.gpm = gpm*0.5;
+% Data.dpm = dpm*0.5*0.99;
+% [cce, ps] = calcce(theta, deltas, cs, Data, ps);
+%%
+
+Data.pgreal = pgreal*0.95;
+coef = -eta(end-3:end);
+gpm1 = contraction_tech(theta, deltas(:,1:5), cs(:,1:5), Data, cce, coef, ps);
 
 %% hinge function
 

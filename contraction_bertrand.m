@@ -1,4 +1,4 @@
-function [ p, margin, s, iter, flag, distance ] = contraction_bertrand( theta, delta, c, comply_mc, Data, p0 )
+function [ p, margin, s, iter, flag, distance ] = contraction_bertrand( theta, delta, c, Data, p0 )
 %CONTRACTION_BERTRAMD Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -20,15 +20,15 @@ while ~convergence
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
     margin = calmargin(s, alphai, Data.iF);
-    p2 = c + margin - comply_mc;
+    p2 = c + margin;
     
     r = p2 - p;
     
     Data.price = p2;
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
-    margin = calmargin(s, alphai, Data.iF);
-    p3 = c + margin - comply_mc;
+    [margin, flag] = calmargin(s, alphai, Data.iF);
+    p3 = c + margin;
     
     v = (p3 - p2) - r;
     a = stepsize(r,v);
@@ -39,7 +39,7 @@ while ~convergence
     convergence = distance < toler;
     iter = iter + 1;
         
-    if any(isnan(p))
+    if any(isnan(p)) || (~flag)
         p = p0.*(1 + (rand(size(p))-0.5)*0.2);
     end
     
