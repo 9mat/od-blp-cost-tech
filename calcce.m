@@ -1,4 +1,4 @@
-function [ cce, ps ] = calcce(theta, deltas, cs, Data, ps0 )
+function [ cce, ps, share ] = calcce(theta, deltas, cs, Data, ps0 )
 %CALCCE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -29,6 +29,7 @@ for i=1:ns
 end
 
 index = all(~isnan(ps),1);
+share = mean(ss(:,index),2);
 cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
 
 % trim outliers

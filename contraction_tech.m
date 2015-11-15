@@ -21,15 +21,19 @@ f0 = f(cce0);
 int_f0 = int_f(cce0);
 
 iter = 0;
-stepsize = @(r,v) sign(sum(r.*v))*norm(r)/norm(v);
+% stepsize = @(r,v) sign(sum(r.*v))*norm(r)/norm(v);
+
 
 while ~convergence
     change_c = (f(cce).*cce - f0.*cce0 - int_f(cce) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
     cs = bsxfun(@plus, cs0, change_c);
-
+    
     Data.gpm = gpm;
     Data.dpm = gpm.*Data.pgreal;
+    
+    nnan = sum(any(isnan(ps)));
+    ps(:, any(isnan(ps))) = repmat(Data.price, [1 nnan]);
     [cce, ps] = calcce(theta, deltas, cs, Data, ps);
     
     gpm2 = Data.gpm.*exp(f(cce)-f0);

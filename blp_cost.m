@@ -26,6 +26,8 @@ truck       = data(:,15);
 van         = data(:,16);
 minivan     = data(:,17);
 
+fleet       = 1 - suv - truck - van - minivan; % car or truck;
+
 comply      = data(:,18);
 cafestd     = data(:,19)*0.7;
 cafe        = data(:,20)*0.7;
@@ -33,7 +35,7 @@ torque      = data(:,21)/100;
 income09    = data(:,24)/1000;
 mampg       = data(:,23);
 gdppc       = data(:,22)/1000;
-height      = data(:,25);
+
 
 share       = data(:,4);
 outshr      = data(:,5);
@@ -57,6 +59,9 @@ N = 50;
 [T, ~, iT] = unique(cdid);
 [F, ~, iF] = unique([cdid, firmid], 'rows');
 
+[~, ~, fleet] = unique([iF, fleet], 'rows');
+cafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
+cafe2 = cafe2(fleet);
 nT = max(iT);
 
 %% price rc and dpm rc will be dealt with separately
@@ -218,6 +223,8 @@ Data.cafe = cafe;
 Data.cagpm = cagpm;
 Data.cagpmstd = cagpmstd;
 Data.income09 = income09;
+Data.fleet = fleet;
+Data.cafe2 = cafe2;
 
 
 %%
@@ -329,19 +336,7 @@ sigmae = params.sigmae;
 % gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
 
 % shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
-binding = Data.comply == 0;
-fined = Data.comply == -1;
-
-gammai = zeros(size(Data.comply));
-gammai(binding) = params.gamma;
-gammai(fined) = params.gamma + 0.055;
-
-comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
-comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
-comply_mc2(binding) = 0;
-comply_mc = gammai.*(comply_mc1 + comply_mc2);
-
-comply_mc(isnan(comply_mc)) = 0;
+[comply_mc, gammai] = calcomply_mc(params.gamma, Data);
 
 alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
 margin = calmargin(s, alphai, Data.iF);
@@ -411,7 +406,7 @@ xis = xi(randi(J, [J,ns]));
 omegas = omega(randi(J, [J,ns]));
 
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
-cs = bsxfun(@minus, exp(bsxfun(@plus, Xc*beta_c, omegas)), comply_mc);
+cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 
 [cce, ps] = calcce(theta, deltas, cs, Data);
 
@@ -454,7 +449,7 @@ ye = -log(gpm);
 % [cce, ps] = calcce(theta, deltas, cs, Data, ps);
 %%
 
-Data.pgreal = pgreal*0.95;
+Data.pgreal = pgreal*0.99;
 coef = -eta(end-3:end);
 gpm1 = contraction_tech(theta, deltas(:,1:5), cs(:,1:5), Data, cce, coef, ps);
 

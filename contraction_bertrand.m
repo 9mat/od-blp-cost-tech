@@ -15,20 +15,42 @@ p = p0;
 
 stepsize = @(r,v) -norm(r)/norm(v);
 
+[~, ~, fleet] = unique([Data.iF, Data.fleet], 'rows');
+
+cafe0 = Data.cafe;
+cafe20 = Data.cafe2;
+
 while ~convergence
     Data.price = p;
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
     margin = calmargin(s, alphai, Data.iF);
-    p2 = c + margin;
+
+    share = mean(s,2);
+    newcafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(Data.gpm/100));
+    newcafe2 = newcafe2(fleet);
+%     Data.cafe = newcafe2.*cafe0./cafe20;
+%     Data.cagpm = 1./Data.cafe*100;
+    comply_mc = calcomply_mc(params.gamma, Data);
+
+    p2 = c + margin - comply_mc;
     
+
     r = p2 - p;
     
     Data.price = p2;
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
     [margin, flag] = calmargin(s, alphai, Data.iF);
-    p3 = c + margin;
+    
+    share = mean(s,2);
+    newcafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(Data.gpm/100));
+    newcafe2 = newcafe2(fleet);
+%     Data.cafe = newcafe2.*cafe0./cafe20;
+%     Data.cagpm = 1./Data.cafe*100;
+    comply_mc = calcomply_mc(params.gamma, Data);
+
+    p3 = c + margin - comply_mc;
     
     v = (p3 - p2) - r;
     a = stepsize(r,v);
