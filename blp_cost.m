@@ -60,8 +60,8 @@ N = 50;
 [F, ~, iF] = unique([cdid, firmid], 'rows');
 
 [~, ~, fleet] = unique([iF, fleet], 'rows');
-cafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
-cafe2 = cafe2(fleet);
+cafe2short = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
+cafe2 = cafe2short(fleet);
 nT = max(iT);
 
 %% price rc and dpm rc will be dealt with separately
@@ -225,6 +225,7 @@ Data.cagpmstd = cagpmstd;
 Data.income09 = income09;
 Data.fleet = fleet;
 Data.cafe2 = cafe2;
+Data.cafe2short = cafe2short;
 
 
 %%
@@ -325,18 +326,20 @@ lambda = params.lambda;
 sigmap = params.sigmap;
 sigmae = params.sigmae;
 % b = params.b;
-% gamma = params.gamma;
+gamma = params.gamma;
 
 % invert for delta
 [delta, s] = invertshare(theta, Data);
 
-% % shadow cost
-% gammaj = zeros(size(Data.price));
-% gammaj(Data.comply <= 0) = gamma;
-% gammaj(Data.comply < 0) = (55/1000)/((1/27-1/28)*100);
+binding = Data.comply == 0;
+fined = Data.comply == -1;
+
+gammaj = zeros(size(Data.comply));
+gammaj(binding) = gamma;
+gammaj(fined) = gamma + 0.055;
 
 % shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
-[comply_mc, gammai] = calcomply_mc(params.gamma, Data);
+comply_mc = calcomply_mc_j(gammaj, Data);
 
 alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
 margin = calmargin(s, alphai, Data.iF);
@@ -401,14 +404,36 @@ xi = res(1:J);
 omega = res(J+1:end);
 
 %% simulate
-ns = 5;
-xis = xi(randi(J, [J,ns]));
-omegas = omega(randi(J, [J,ns]));
+ns = 1;
+% xis = xi(randi(J, [J,ns]));
+% omegas = omega(randi(J, [J,ns]));
+xis = zeros([J ns]);
+omegas = zeros([J ns]);
 
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 
-[cce, ps] = calcce(theta, deltas, cs, Data);
+Data.cafe = cafe;
+ps = repmat(Data.price, [1 ns]);
+% cafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
+% cafe2long = cafe2(fleet);
+% gammaf = params.gamma*ones(size(cafe2));
+% binding = Data.comply == 0;
+% for i = 1:100
+%     [cce, ps, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
+%     newcafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(Data.gpm/100));
+%     gammaf = gammaf - 0.1*(newcafe2 - cafe2);
+%     gammajj = gammaf(fleet);
+%     oldgammaj = gammaj;
+%     gammaj(binding) = gammajj(binding);
+%     newcafe2long = newcafe2(fleet);
+%     gammaj(gammaj < 0) = 0;   
+%     index = binding & (gammaj > 0);
+%     distance = max(abs(newcafe2long(index) - cafe2long(index)));
+%     fprintf('****** CAFE iteration %d, distance = %f\n', i, distance);
+% end
+
+[cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
 
 %%
 % [~, iii] = sort(cce);
@@ -438,7 +463,7 @@ legend('1','2','3','4','5','6','7');
 
 poly = bsxfun(@power, cce, 0:3);
 Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
-Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies poly];
+Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
