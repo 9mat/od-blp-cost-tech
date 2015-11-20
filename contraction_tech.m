@@ -1,4 +1,4 @@
-function [ gpm ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps)
+function [ gpm ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj)
 %CONTRACTION_TECH Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -31,10 +31,10 @@ while ~convergence
     
     Data.gpm = gpm;
     Data.dpm = gpm.*Data.pgreal;
-    
+
     nnan = sum(any(isnan(ps)));
     ps(:, any(isnan(ps))) = repmat(Data.price, [1 nnan]);
-    [cce, ps] = calcce(theta, deltas, cs, Data, ps);
+    [cce, ps, gammaj] = calcce(theta, deltas, cs, Data, gammaj, ps);
     
     gpm2 = Data.gpm.*exp(f(cce)-f0);
     gpm2(isnan(gpm2)) = Data.gpm(isnan(gpm2));
@@ -58,7 +58,7 @@ while ~convergence
 %     a = stepsize(r,v);
     
 %     gpm = gpm.*exp(-2*a*r + a^2*v);
-    gpm = gpm.*exp(r);
+    gpm = gpm.*exp(0.1*r);
     
     distance = max(abs(r));
     convergence = distance < toler;

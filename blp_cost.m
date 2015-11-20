@@ -46,9 +46,6 @@ madpm       = 1./mampg*100.*pgreal;
 hpwt        = hp./weight;
 trend       = cdid-1;
 
-cagpm       = 1./cafe*100;
-cagpmstd    = 1./cafestd*100;
-
 count = 0;
 
 rng('default');
@@ -59,9 +56,17 @@ N = 50;
 [T, ~, iT] = unique(cdid);
 [F, ~, iF] = unique([cdid, firmid], 'rows');
 
-[~, ~, fleet] = unique([iF, fleet], 'rows');
+[~, fleetind, fleet] = unique([iF, fleet], 'rows');
 cafe2short = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
 cafe2 = cafe2short(fleet);
+cafe(isnan(cafe)) = cafe2(isnan(cafe));
+
+binding = comply == 0;
+cafe(binding) = cafe2(binding);
+cafestd(binding) = cafe2(binding);
+cagpm       = 1./cafe*100;
+cagpmstd    = 1./cafestd*100;
+
 nT = max(iT);
 
 %% price rc and dpm rc will be dealt with separately
@@ -221,11 +226,13 @@ Data.comply = comply;
 Data.cafestd = cafestd;
 Data.cafe = cafe;
 Data.cagpm = cagpm;
+Data.cagpm2 = 1./cafe2*100;
 Data.cagpmstd = cagpmstd;
 Data.income09 = income09;
 Data.fleet = fleet;
 Data.cafe2 = cafe2;
 Data.cafe2short = cafe2short;
+Data.fleetind = fleetind;
 
 
 %%
@@ -331,15 +338,8 @@ gamma = params.gamma;
 % invert for delta
 [delta, s] = invertshare(theta, Data);
 
-binding = Data.comply == 0;
-fined = Data.comply == -1;
-
-gammaj = zeros(size(Data.comply));
-gammaj(binding) = gamma;
-gammaj(fined) = gamma + 0.055;
-
 % shadow_cost = gammaj.*(Data.gpm - 1./(Data.cafestd/100));
-comply_mc = calcomply_mc_j(gammaj, Data);
+[comply_mc, gammaj] = calcomply_mc(params.gamma, Data);
 
 alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
 margin = calmargin(s, alphai, Data.iF);
@@ -413,27 +413,28 @@ omegas = zeros([J ns]);
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 
+diary calcce.txt; diary on;
 Data.cafe = cafe;
 ps = repmat(Data.price, [1 ns]);
-% cafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(gpm/100));
-% cafe2long = cafe2(fleet);
-% gammaf = params.gamma*ones(size(cafe2));
-% binding = Data.comply == 0;
-% for i = 1:100
-%     [cce, ps, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
-%     newcafe2 = accumarray(fleet, share)./accumarray(fleet, share.*(Data.gpm/100));
-%     gammaf = gammaf - 0.1*(newcafe2 - cafe2);
-%     gammajj = gammaf(fleet);
-%     oldgammaj = gammaj;
-%     gammaj(binding) = gammajj(binding);
-%     newcafe2long = newcafe2(fleet);
-%     gammaj(gammaj < 0) = 0;   
-%     index = binding & (gammaj > 0);
-%     distance = max(abs(newcafe2long(index) - cafe2long(index)));
-%     fprintf('****** CAFE iteration %d, distance = %f\n', i, distance);
-% end
+[cce, ps, gammaj0, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
+diary off;
+% [cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
 
-[cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
+%%
+% ns = 5;
+% xis = xi(randi(J, [J,ns]));
+% omegas = omega(randi(J, [J,ns]));
+% xis = zeros([J ns]);
+% omegas = zeros([J ns]);
+
+%%
+% deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
+% cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
+% 
+% Data.cafe = cafe;
+% ps = repmat(Data.price, [1 ns]);
+% [cce, ps, gammajs, share] = calcce(theta, deltas, cs, Data, gammaj0, ps);
+ 
 
 %%
 % [~, iii] = sort(cce);
@@ -450,7 +451,7 @@ cdiddummies(:,1) = [];
 
 xplot = sort(cce(index));
 colors = 'ymcrgbkp';
-for pow = 1:7
+for pow = 1:6
     poly = bsxfun(@power, cce, 0:pow);
     Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
     ye = -log(gpm);
@@ -474,22 +475,24 @@ ye = -log(gpm);
 % [cce, ps] = calcce(theta, deltas, cs, Data, ps);
 %%
 
-Data.pgreal = pgreal*0.99;
+diary contraction_tech.txt; diary on;
+Data.pgreal = 0.95*pgreal;
 coef = -eta(end-3:end);
-gpm1 = contraction_tech(theta, deltas(:,1:5), cs(:,1:5), Data, cce, coef, ps);
+gpm1 = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
+diary off;
 
-%% hinge function
-
-hinge1 = max(cce-10, 0);
-hinge2 = max(cce-30, 0);
-hinge3 = max(cce-60, 0);
-hinge4 = max(cce-80, 0);
-hinge5 = max(cce-6, 0);
-hinge6 = max(cce-8, 0);
-hinges = [hinge1 hinge2 hinge3];
-torque = data(:,21);
-
-Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck ' num2str(2:max(cdid)) ' const hinge1 hinge2 hinge3 hinge4 hinge5'];
-Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies const hinges];
-ye = -log(gpm);
-[eta2, se2] = ols(Xe(index,:), ye(index), Xe_lb);
+% %% hinge function
+% 
+% hinge1 = max(cce-10, 0);
+% hinge2 = max(cce-30, 0);
+% hinge3 = max(cce-60, 0);
+% hinge4 = max(cce-80, 0);
+% hinge5 = max(cce-6, 0);
+% hinge6 = max(cce-8, 0);
+% hinges = [hinge1 hinge2 hinge3];
+% torque = data(:,21);
+% 
+% Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck ' num2str(2:max(cdid)) ' const hinge1 hinge2 hinge3 hinge4 hinge5'];
+% Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies const hinges];
+% ye = -log(gpm);
+% [eta2, se2] = ols(Xe(index,:), ye(index), Xe_lb);

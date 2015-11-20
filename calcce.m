@@ -1,4 +1,4 @@
-function [ cce, ps, share ] = calcce(theta, deltas, cs, Data, gammaj, ps0 )
+function [ cce, ps, gammajs, share ] = calcce(theta, deltas, cs, Data, gammaj, ps0 )
 %CALCCE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,16 +16,21 @@ J = size(deltas,1);
 ce = zeros(J,ns);
 ss = zeros(J,ns);
 ps = zeros(J,ns);
+gammajs = zeros(J,ns);
 
-if nargin < 5
+if nargin < 6
     ps0 = repmat(Data.price, [1 ns]);
 end
 
 for i=1:ns
-    [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
-    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) + gammaj.*mean(s,2).*Data.gpm./Data.cagpm.*Data.cafe;
+%     [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
+    [ps(:,i), mm, s, gammajs(:,i), cafe, iter, distance] ...
+        = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i), 0.0005, 400);
+    cagpm = 1./cafe*100;
+    ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) ...
+        + gammajs(:,i).*mean(s,2).*Data.gpm./cagpm.*cafe;
     ss(:,i) = mean(s,2);
-    fprintf(' Simulation #%d, #iterations = %d, exit flag = %d, distance = %f\n', i, iter, flag, distance);
+    fprintf(' Simulation #% 5d, #iterations = % 3d, distance = %f\n', i, iter, distance);
 end
 
 index = all(~isnan(ps),1);

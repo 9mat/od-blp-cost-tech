@@ -6,24 +6,11 @@ function [ V ] = cov( theta, beta, Data )
         params = getParams(theta);
         [delta, s] = invertshare(theta, Data);
         
-        % marginal compliance cost
-        binding = Data.comply == 0;
-        fined = Data.comply == -1;
-        
-        gammai = zeros(size(Data.comply));
-        gammai(binding) = params.gamma;
-        gammai(fined) = params.gamma + 0.05;
-        
-        comply_mc1 = (1-Data.gpm./Data.cagpm).*Data.cafe;
-        comply_mc2 = (1-Data.cagpm./Data.cagpmstd).*Data.cafestd;
-        comply_mc2(binding) = 0;
-        comply_mc = gammai.*(comply_mc1 + comply_mc2);
-        
-        comply_mc(isnan(comply_mc)) = 0;
-                
+        comply_mc = calcomply_mc(params.gamma, Data);
+
         alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
         margin = calmargin(s, alphai, Data.iF);
-        c = Data.price - margin - comply_mc;
+        c = Data.price - margin + comply_mc;
         logc = log(c);
         logc(c<=0) = 1e-30;
         y = [delta; logc];
