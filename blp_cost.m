@@ -476,9 +476,9 @@ ye = -log(gpm);
 %%
 
 diary contraction_tech.txt; diary on;
-Data.pgreal = 0.95*pgreal;
+Data.pgreal = 2.74;
 coef = -eta(end-3:end);
-gpm1 = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
+[gpm1, ps1, gammaj1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
 diary off;
 
 % %% hinge function
