@@ -1,7 +1,7 @@
 diary diary.txt;
 diary on;
 clear;
-df = importdata('..\data\od\od-annual-6.csv');
+df = importdata('../data/od/od-annual-6.csv');
 data = df.data;
 
 %%
@@ -74,8 +74,8 @@ nT = max(iT);
 %% price rc and dpm rc will be dealt with separately
 
 % random coefficients
-Xrc_lb = 'const hpwt weight space';
-Xrc = [const hpwt weight space]; % suv truck van minivan];
+Xrc_lb = 'const hpwt weight space madpm';
+Xrc = [const hpwt weight space madpm./income09]; % suv truck van minivan];
 Krc = size(Xrc,2);
 
 % mean utility coefficients
@@ -183,6 +183,7 @@ theta0 =    [
     -1
     -0.2
     0.1
+    0.01
 %    
 %     1.5757 %sigma cartyve
 %     1.0700
@@ -239,12 +240,12 @@ Data.fleetind = fleetind;
 
 %%
 % theta0 = [sigma0 alpha0 lambda0 sigmaprice0 sigmae0 a0 b0];
-solveropts = nloptset('algorithm', 'LN_BOBYQA');
-optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
-    'maxtime', 1e5, 'solver', 'NLOPT', 'solverOpts', solveropts);
-
-optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
-    'maxtime', 1e5, 'solver', 'NLOPT');
+% solveropts = nloptset('algorithm', 'LN_BOBYQA');
+% optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
+%     'maxtime', 1e5, 'solver', 'NLOPT', 'solverOpts', solveropts);
+% 
+% optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
+%     'maxtime', 1e5, 'solver', 'NLOPT');
 
 % thetalb = -10*ones(size(theta0));
 % thetalb(end-1) = -10;
@@ -266,10 +267,15 @@ thetaub = 50*ones(size(theta0));
 
 
 %%
-OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
-    'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
 
-[thetaIP, fvalIP] = solve(OptIP);
+options = optimset('Display', 'iter', 'MaxFunEvals', 40000, 'TolFun', 1e-8, 'TolX', 1e-8, 'MaxIter', 10000);
+[thetaIP, fval] = fminsearch(@(x) gmmcost(x, Data),  theta0, options); % [], [], [], [], thetalb, thetaub, [], options);
+[thetaIP, fval] = fminunc(@(x) gmmcost(x, Data),  thetaIP, options); % [], [], [], [], thetalb, thetaub, [], options);
+
+% OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
+%     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
+% 
+% [thetaIP, fvalIP] = solve(OptIP);
 
 % thetaIP = thetaIP.*(1 + (rand(size(thetaIP))-0.5)*0.2);
 % OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
@@ -453,6 +459,8 @@ cdiddummies(:,1) = [];
 
 xplot = sort(cce(index));
 colors = 'ymcrgbkp';
+figure('visible', 'off');
+% figure(1);
 for pow = 1:6
     poly = bsxfun(@power, cce, 0:pow);
     Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
@@ -463,7 +471,7 @@ for pow = 1:6
     hold on; plot(xplot, f(xplot), colors(pow));
 end
 legend('1','2','3','4','5','6','7');
-
+print('gpm_poly', '-dpng');
 poly = bsxfun(@power, cce, 0:3);
 Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
 Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
