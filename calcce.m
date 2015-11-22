@@ -30,7 +30,7 @@ for i=1:ns
     ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) ...
         + gammajs(:,i).*mean(s,2).*Data.gpm./cagpm.*cafe;
     ss(:,i) = mean(s,2);
-    fprintf(' Simulation #% 5d, #iterations = % 3d, distance = %f\n', i, iter, distance);
+%     fprintf(' Simulation #% 5d, #iterations = % 3d, distance = %f\n', i, iter, distance);
 end
 
 index = all(~isnan(ps),1);

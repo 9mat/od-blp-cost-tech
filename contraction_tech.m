@@ -3,7 +3,7 @@ function [ gpm, ps, gammaj, share ] = contraction_tech(theta, deltas, cs0, Data,
 %   Detailed explanation goes here
 
 convergence = false;
-toler = 1e-6;
+toler = 1e-4;
 
 gpm = Data.gpm;
 

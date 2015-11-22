@@ -62,8 +62,10 @@ cafe2 = cafe2short(fleet);
 cafe(isnan(cafe)) = cafe2(isnan(cafe));
 
 binding = comply == 0;
+inactive = comply == 1;
 cafe(binding) = cafe2(binding);
 cafestd(binding) = cafe2(binding);
+cafestd(inactive) = min(cafe2(inactive), cafestd(inactive));
 cagpm       = 1./cafe*100;
 cagpmstd    = 1./cafestd*100;
 
