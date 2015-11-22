@@ -478,6 +478,9 @@ Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
+result_file = ['result-' datestr(now, 'yymmdd-HHMMSS.mat')];
+save(result_file);
+
 %%
 % Data.pgreal = pgreal*0.99;
 % Data.gpm = gpm*0.5;
@@ -490,6 +493,8 @@ Data.pgreal = 2.74;
 coef = -eta(end-3:end);
 [gpm1, ps1, gammaj1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
 diary off;
+
+save(result_file);
 
 % %% hinge function
 % 
