@@ -1,13 +1,17 @@
 function [ p, margin, s, gammaj, cafe, i, distance ] = ...
-    contraction_cafe( theta, delta, c, Data, gammaj, p0, stepsize, max_iter )
+    contraction_cafe( theta, delta, c, Data, gammaj, p0, stepsize, maxiter )
 %CONTRACTION_CAFE Summary of this function goes here
 %   Detailed explanation goes here
+
+settings = loadSettings;
+maxiter = settings.maxitercafe;
+toler = settings.tolercafe;
 
 % stepsize = 0.1;
 % iter = 100;
 
 % default input
-if nargin < 8; max_iter = 500; end;
+% if nargin < 8; maxiter = 500; end;
 if nargin < 7; stepsize = 0.1; end;
 if nargin < 6; p0 = Data.price; end;
 
@@ -30,8 +34,6 @@ inactive = Data.comply == 1;
 
 
 gammaj(Data.comply == 1) = 0;
-
-toler = 1e-5;
 
     function [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, maxiter)
         index = any(isnan(p));
@@ -60,7 +62,7 @@ stepsize = @(r,v) -norm(r)/norm(v);
 [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
 % fprintf('     - starting distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
 
-for i = 1:max_iter    
+for i = 1:maxiter    
     step = 0.1;
     fprintf('**** CAFE iter #%5d\n', i);
     

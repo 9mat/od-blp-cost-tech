@@ -2,8 +2,11 @@ function [ gpm, ps, gammaj, share ] = contraction_tech(theta, deltas, cs0, Data,
 %CONTRACTION_TECH Summary of this function goes here
 %   Detailed explanation goes here
 
+settings = loadSettings;
+maxiter = settings.maxitertech;
+toler = settings.tolertech;
+
 convergence = false;
-toler = 1e-4;
 
 gpm = Data.gpm;
 
@@ -65,7 +68,7 @@ while ~convergence
     distance = max(abs(r/step));
     convergence = distance < toler;
     iter = iter + 1;
-    if iter > 2;
+    if iter > maxiter;
         break;
     end
     fprintf(' *** tech contraction iter #% 4d, distance = %f\n', iter, distance);

@@ -25,7 +25,7 @@ end
 for i=1:ns
 %     [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
     [ps(:,i), mm, s, gammajs(:,i), cafe, iter, distance] ...
-        = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i), 0.0005, 400);
+        = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
     cagpm = 1./cafe*100;
     ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) ...
         + gammajs(:,i).*mean(s,2).*Data.gpm./cagpm.*cafe;

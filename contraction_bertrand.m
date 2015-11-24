@@ -2,14 +2,17 @@ function [ p, margin, s, iter, flag, distance ] = contraction_bertrand( theta, d
 %CONTRACTION_BERTRAMD Summary of this function goes here
 %   Detailed explanation goes here
 
-params = getParams(theta);
+settings = loadSettings;
+maxiter = settings.maxbertrand;
+toler = settings.tolerbert;
 
+params = getParams(theta);
 alphai = bsxfun(@rdivide, params.alpha*exp(params.sigmap*Data.vprice), Data.income09);
 
+
 convergence = false;
-toler = 1e-6;
 iter = 0;
-if nargin < 7; maxiter = 1000; end;
+
 
 p = p0;
 
