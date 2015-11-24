@@ -2,10 +2,14 @@ function cf_std( datafile, carstd, truckstd )
 %CF_STD Summary of this function goes here
 %   Detailed explanation goes here
 
+diary
 if ischar(carstd); carstd = str2double(carsrd); end;
 if ischar(truckstd); truckstd = str2double(truckstd); end;
 
 load(datafile);
+
+diary(['diary-cf-std-' runid '.txt']); diary on;
+
 
 car = 1-suv-truck-van-minivan;
 Data.cafestd(car==1) = carstd;
@@ -18,6 +22,7 @@ coef = -eta(end-3:end);
 resultfile = ['cf-std-' runid '.mat'];
 save(resultfile);
 
+diary off;
 
 end
 
