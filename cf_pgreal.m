@@ -2,6 +2,8 @@ function cf_pgreal( datafile, newpg )
 %CF_PGREAL Summary of this function goes here
 %   Detailed explanation goes here
 
+if ischar(newpg); newpg = str2double(newpg); end;
+
 load(datafile);
 Data.pgreal = newpg;
 madpm = 1./mampg*100*newpg;

@@ -2,6 +2,9 @@ function cf_std( datafile, carstd, truckstd )
 %CF_STD Summary of this function goes here
 %   Detailed explanation goes here
 
+if ischar(carstd); carstd = str2double(carsrd); end;
+if ischar(truckstd); truckstd = str2double(truckstd); end;
+
 load(datafile);
 
 car = 1-suv-truck-van-minivan;

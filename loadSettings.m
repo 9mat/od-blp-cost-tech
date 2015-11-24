@@ -13,6 +13,9 @@ settings.maxbertrand = 5000;
 fileid = fopen('settings.txt', 'r');
 while ~feof(fileid)
     varname = fscanf(fileid, '%s', 1);
+    if isempty(varname)
+        continue;
+    end
     value = fscanf(fileid, '%f', 1);
     settings.(varname) = value;
 end

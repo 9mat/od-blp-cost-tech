@@ -525,3 +525,7 @@ diary off;
 % Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck cdiddummies const hinges];
 % ye = -log(gpm);
 % [eta2, se2] = ols(Xe(index,:), ye(index), Xe_lb);
+%%
+
+% Data.gpm = gpm1;
+% [p, margin, s, iter, flag, distance] = contraction_cafe(theta, delta, c, Data, gammaj1, ps1);
