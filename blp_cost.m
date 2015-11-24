@@ -1,8 +1,13 @@
-diary diary.txt;
-diary on;
+
 clear;
 df = importdata('../data/od/od-annual-6.csv');
 data = df.data;
+
+runid = datestr(now, 'yymmdd-HHMMSS');
+estout = ['blp-estimation-' runid '.txt'];
+gpmout = ['gpm-estimation-' runid '.txt'];
+contractionout = ['tech-contraction-' runid '.txt'];
+result_file = ['result-' runid '.mat'];
 
 %%
 global lastdelta count outshr
@@ -76,11 +81,13 @@ nT = max(iT);
 % random coefficients
 Xrc_lb = 'const hpwt weight space madpm';
 Xrc = [const hpwt weight space madpm./income09]; % suv truck van minivan];
+madpm_idx_rc = 5; % index of madpm in Xrc
 Krc = size(Xrc,2);
 
 % mean utility coefficients
 Xv_lb = 'const madpm hpwt weight space suv truck van minivan';
 Xv = [const madpm./income09 hpwt weight space suv truck van minivan];
+madpm_idx_v = 2; % index of madpm in Xv
 Kv = size(Xv,2);
 
 % cost coefficients
@@ -268,7 +275,10 @@ thetaub = 50*ones(size(theta0));
 
 %%
 
-options = optimset('Display', 'iter', 'MaxFunEvals', 40000, 'TolFun', 1e-8, 'TolX', 1e-8, 'MaxIter', 10000);
+diary(estout);
+diary on;
+
+options = optimset('Display', 'iter', 'MaxFunEvals', 40000, 'TolFun', 1e-8, 'TolX', 1e-8, 'MaxIter', 400);
 [thetaIP, fval] = fminsearch(@(x) gmmcost(x, Data),  theta0, options); % [], [], [], [], thetalb, thetaub, [], options);
 [thetaIP, fval] = fminunc(@(x) gmmcost(x, Data),  thetaIP, options); % [], [], [], [], thetalb, thetaub, [], options);
 
@@ -412,6 +422,10 @@ xi = res(1:J);
 omega = res(J+1:end);
 
 %% simulate
+diary(gpmout);
+diary on;
+
+
 ns = 1;
 % xis = xi(randi(J, [J,ns]));
 % omegas = omega(randi(J, [J,ns]));
@@ -421,11 +435,9 @@ omegas = zeros([J ns]);
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 
-diary calcce.txt; diary on;
 Data.cafe = cafe;
 ps = repmat(Data.price, [1 ns]);
 [cce, ps, gammaj0, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
-diary off;
 % [cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
 
 %%
@@ -478,8 +490,8 @@ Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 
-result_file = ['result-' datestr(now, 'yymmdd-HHMMSS.mat')];
 save(result_file);
+diary off;
 
 %%
 % Data.pgreal = pgreal*0.99;
@@ -488,13 +500,15 @@ save(result_file);
 % [cce, ps] = calcce(theta, deltas, cs, Data, ps);
 %%
 
-diary contraction_tech.txt; diary on;
-Data.pgreal = 2.74;
-coef = -eta(end-3:end);
-[gpm1, ps1, gammaj1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
-diary off;
-
-save(result_file);
+% diary(contractionout);
+% diary on;
+% 
+% Data.pgreal = 2.74;
+% coef = -eta(end-3:end);
+% [gpm1, ps1, gammaj1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
+% 
+% diary off;
+% save(result_file);
 
 % %% hinge function
 % 

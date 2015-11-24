@@ -62,7 +62,7 @@ stepsize = @(r,v) -norm(r)/norm(v);
 
 for i = 1:max_iter    
     step = 0.1;
-%     fprintf('**** CAFE iter #%5d\n', i);
+    fprintf('**** CAFE iter #%5d\n', i);
     
 
     gammaj2 = gammaj;
@@ -76,7 +76,7 @@ for i = 1:max_iter
     if distance < toler; break; end;
     
     [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p, 2000);
-%     fprintf('     - 1st step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance3, iter3, distance_bertrand3);
+    fprintf('     - 1st step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance3, iter3, distance_bertrand3);
     gammaj3 = gammaj2;
     binding2 = maybinding; % | (inactive & (direction(fleet) < 0));
     gammaj3(binding2) = gammaj3(binding2) - step*direction(fleet(binding2));
@@ -95,7 +95,7 @@ for i = 1:max_iter
     [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
 
 %     if i == 6; keyboard; end;
-%     fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
+    fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
    
 %     if (distance2 > lastdistance); break; end
     
@@ -146,7 +146,7 @@ end
 
 cafe = cafef(fleet);
 
-fprintf('**     Done CAFE iteration % 4d, distance = %f\n', i, distance);
-fprintf('************************************************************************\n');
+% fprintf('**     Done CAFE iteration % 4d, distance = %f\n', i, distance);
+% fprintf('************************************************************************\n');
 end
 

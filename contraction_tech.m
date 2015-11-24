@@ -65,7 +65,10 @@ while ~convergence
     distance = max(abs(r/step));
     convergence = distance < toler;
     iter = iter + 1;
-    fprintf(' *** tech contraction iter #%d, distance = %f\n', iter, distance);
+    if iter > 2;
+        break;
+    end
+    fprintf(' *** tech contraction iter #% 4d, distance = %f\n', iter, distance);
 end
 
 end
