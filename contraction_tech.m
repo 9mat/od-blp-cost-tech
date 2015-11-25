@@ -1,10 +1,12 @@
-function [ gpm, ps, gammaj, cce, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj)
+function [ gpm, ps, gammaj, cce, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj, diaryname)
 %CONTRACTION_TECH Summary of this function goes here
 %   Detailed explanation goes here
 
 settings = loadSettings;
 maxiter = settings.maxitertech;
 toler = settings.tolertech;
+
+hasdiary = nargout > 8;
 
 convergence = false;
 
@@ -30,6 +32,8 @@ gpm0 = Data.gpm;
 step = 0.1;
 tic;
 while ~convergence
+    if hasdiary; diary(diaryname); diary on; end;
+    
     change_c = (f(cce).*cce - f0.*cce0 - int_f(cce) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
     cs = bsxfun(@plus, cs0, change_c);
@@ -39,7 +43,7 @@ while ~convergence
 
     nnan = sum(any(isnan(ps)));
     ps(:, any(isnan(ps))) = repmat(Data.price, [1 nnan]);
-    [cce2, ps, gammaj, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
+    [cce2, ps, gammaj, share] = calcce(theta, deltas, cs, Data, gammaj, ps, settings);
     
     cce2 = cce + step*(cce2-cce);
     r = cce2 - cce;
@@ -54,7 +58,7 @@ while ~convergence
 
     Data.gpm = gpm2;
     Data.dpm = gpm2.*Data.pgreal;
-    [cce3, ps, gammaj] = calcce(theta, deltas, cs, Data, gammaj, ps);
+    [cce3, ps, gammaj] = calcce(theta, deltas, cs, Data, gammaj, ps, settings);
     
     cce3 = cce3 + step*(cce3-cce2);
     v = (cce3 - cce2) - r;
@@ -79,6 +83,8 @@ while ~convergence
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');
+    
+    if hasdiary; diary off; end;
 end
 
 end

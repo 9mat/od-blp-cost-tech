@@ -1,8 +1,7 @@
-function [ p, margin, s, iter, flag, distance ] = contraction_bertrand( theta, delta, c, Data, gammaj, p0, maxiter )
+function [ p, margin, s, iter, flag, distance ] = contraction_bertrand( theta, delta, c, Data, gammaj, p0, settings )
 %CONTRACTION_BERTRAMD Summary of this function goes here
 %   Detailed explanation goes here
 
-settings = loadSettings;
 maxiter = settings.maxbertrand;
 toler = settings.tolerbert;
 

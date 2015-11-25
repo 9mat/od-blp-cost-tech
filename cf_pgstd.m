@@ -8,7 +8,7 @@ if ischar(truckstd); truckstd = str2double(truckstd); end;
 
 load(datafile);
 
-diary(['diary-cf-pgstd-' runid '.txt']); diary on;
+diaryname = ['diary-cf-pgstd-' runid '.txt'];
 
 Data.pgreal = newpg;
 madpm = 1./mampg*100*newpg;
@@ -27,7 +27,7 @@ Data.cafestd(car==0) = truckstd;
 Data.cagpmstd = 1./Data.cafestd*100;
 
 coef = -eta(end-3:end);
-[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
+[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0, diaryname);
 
 resultfile = ['cf-pgstd-' runid '.mat'];
 save(resultfile);

@@ -25,6 +25,8 @@ cf_pg_carmpg = zeros(max(cdid), 3);
 cf_pg_truckcafe = zeros(max(cdid), 3);
 cf_pg_truckmpg = zeros(max(cdid), 3);
 
+settings = loadSettings;
+
 for i=1:3
     if i==1; load(['cf-pg-' runid '.mat']);
     elseif i==2; load(['cf-std-' runid '.mat']);
@@ -36,7 +38,7 @@ for i=1:3
     change_c(isnan(change_c)) = 0;
     c1 = bsxfun(@plus, c, change_c);
     
-    [p, margin, s, gammaj] = contraction_cafe(theta, delta1, c1, Data, gammaj1, ps1);
+    [p, margin, s, gammaj] = contraction_cafe(theta, delta1, c1, Data, gammaj1, ps1, settings);
     share1 = mean(s,2);
     
     for t=1:max(cdid)

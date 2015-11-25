@@ -1,9 +1,8 @@
 function [ p, margin, s, gammaj, cafe, i, distance ] = ...
-    contraction_cafe( theta, delta, c, Data, gammaj, p0, stepsize, maxiter )
+    contraction_cafe( theta, delta, c, Data, gammaj, p0, settings )
 %CONTRACTION_CAFE Summary of this function goes here
 %   Detailed explanation goes here
 
-settings = loadSettings;
 maxiter = settings.maxitercafe;
 toler = settings.tolercafe;
 
@@ -12,7 +11,7 @@ toler = settings.tolercafe;
 
 % default input
 % if nargin < 8; maxiter = 500; end;
-if nargin < 7; stepsize = 0.1; end;
+% if nargin < 7; stepsize = 0.1; end;
 if nargin < 6; p0 = Data.price; end;
 
 fleet = Data.fleet;
@@ -39,7 +38,7 @@ gammaj(Data.comply == 1) = 0;
         index = any(isnan(p));
         p(:,index) = p0(:,index);
         [p, margin, s, iter, ~, distance_bertrand ] ...
-            = contraction_bertrand(theta, delta, c, Data, gammaj, p, maxiter);
+            = contraction_bertrand(theta, delta, c, Data, gammaj, p, settings);
         share = mean(s,2);
         cafef = accumarray(fleet, share)./accumarray(fleet, share.*(Data.gpm/100));
         

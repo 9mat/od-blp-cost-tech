@@ -1,4 +1,4 @@
-function [ cce, ps, gammajs, share ] = calcce(theta, deltas, cs, Data, gammaj, ps0 )
+function [ cce, ps, gammajs, share ] = calcce(theta, deltas, cs, Data, gammaj, ps0, settings )
 %CALCCE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -25,7 +25,7 @@ end
 for i=1:ns
 %     [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
     [ps(:,i), mm, s, gammajs(:,i), cafe, iter, distance] ...
-        = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
+        = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i), settings);
     cagpm = 1./cafe*100;
     ce(:,i) = caltechmargin(s, mm, lambdai, Data.iF) ...
         + gammajs(:,i).*mean(s,2).*Data.gpm./cagpm.*cafe;
