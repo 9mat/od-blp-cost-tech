@@ -1,4 +1,4 @@
-function [ gpm, ps, gammaj, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj)
+function [ gpm, ps, gammaj, cce, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj)
 %CONTRACTION_TECH Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -28,6 +28,7 @@ stepsize = @(r,v) -norm(r)/norm(v);
 gpm0 = Data.gpm;
 
 step = 0.1;
+tic;
 while ~convergence
     change_c = (f(cce).*cce - f0.*cce0 - int_f(cce) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
@@ -71,7 +72,13 @@ while ~convergence
     if iter > maxiter;
         break;
     end
-    fprintf(' *** tech contraction iter #% 4d, distance = %f\n', iter, distance);
+    fprintf('######### \n');
+    fprintf('######### \n');
+    fprintf('######### \n');
+    fprintf('######### Tech contraction iter #% 4d, distance = %f, elapsed time = %f secs\n', iter, distance, toc);
+    fprintf('######### \n');
+    fprintf('######### \n');
+    fprintf('######### \n');
 end
 
 end

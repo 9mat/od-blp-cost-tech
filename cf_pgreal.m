@@ -20,7 +20,7 @@ Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 
 coef = -eta(end-3:end);
-[gpm1, ps1, gammaj1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
+[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0);
 
 resultfile = ['cf-pg-' runid '.mat'];
 save(resultfile);
