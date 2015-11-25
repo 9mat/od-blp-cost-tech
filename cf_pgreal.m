@@ -1,6 +1,10 @@
-function cf_pgreal( datafile, newpg )
+function cf_pgreal
 %CF_PGREAL Summary of this function goes here
 %   Detailed explanation goes here
+
+settings = loadSettings;
+datafile = settings.result_file;
+newpg = settings.newpg;
 
 if ischar(newpg); newpg = str2double(newpg); end;
 disp(newpg)

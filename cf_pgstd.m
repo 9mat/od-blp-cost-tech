@@ -1,6 +1,12 @@
-function cf_pgstd( datafile, newpg, carstd, truckstd )
+function cf_pgstd
 %CF_PGSTD Summary of this function goes here
 %   Detailed explanation goes here
+
+settings = loadSettings;
+datafile = settings.result_file;
+newpg = settings.newpg;
+carstd = settings.carstd;
+truckstd = settings.truckstd;
 
 if ischar(newpg); newpg = str2double(newpg); end;
 if ischar(carstd); carstd = str2double(carstd); end;

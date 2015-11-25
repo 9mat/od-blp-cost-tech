@@ -1,6 +1,12 @@
-function cf_std( datafile, carstd, truckstd )
+function cf_std
 %CF_STD Summary of this function goes here
 %   Detailed explanation goes here
+
+settings = loadSettings;
+datafile = settings.result_file;
+carstd = settings.carstd;
+truckstd = settings.truckstd;
+
 
 if ischar(carstd); carstd = str2double(carstd); end;
 if ischar(truckstd); truckstd = str2double(truckstd); end;

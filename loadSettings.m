@@ -12,11 +12,18 @@ settings.maxbertrand = 5000;
 
 fileid = fopen('settings.txt', 'r');
 while ~feof(fileid)
+    vartype = fscanf(fileid, '%s', 1);
+    if isempty(vartype); continue; end
+
     varname = fscanf(fileid, '%s', 1);
-    if isempty(varname)
-        continue;
+    if isempty(varname); continue; end
+    
+    if strcmp(vartype, 'double'); format = '%f';
+    elseif strcmp(vartype, 'int'); format = '%d';
+    else format = '%s';
     end
-    value = fscanf(fileid, '%f', 1);
+    
+    value = fscanf(fileid, format, 1);
     settings.(varname) = value;
 end
 fclose(fileid);
