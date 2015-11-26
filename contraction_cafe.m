@@ -31,8 +31,8 @@ Data.comply = complyf(fleet);
 binding = Data.comply == 0;
 inactive = Data.comply == 1;
 
-
-gammaj(Data.comply == 1) = 0;
+gammaj(minmpg(fleet) > cafestdf(fleet)) = 0;
+gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 
     function [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, maxiter)
         index = any(isnan(p));
@@ -74,10 +74,10 @@ for i = 1:maxiter
     r = gammaj2 - gammaj;
     
     distance = max(abs(r)/step);
+    fprintf('     - 1st step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
     if distance < toler; break; end;
     
     [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p, 2000);
-    fprintf('     - 1st step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance3, iter3, distance_bertrand3);
     gammaj3 = gammaj2;
     binding2 = maybinding; % | (inactive & (direction(fleet) < 0));
     gammaj3(binding2) = gammaj3(binding2) - step*direction(fleet(binding2));
@@ -87,8 +87,11 @@ for i = 1:maxiter
         v = (gammaj3 - gammaj2) - r;
         a = stepsize(r,v);
         gammaj = gammaj - 2*a*r + a^2*v;
-        distance = min(distance, distance3);
+%         distance = min(distance, distance3);
         p = p2;
+        distance = max(abs(gammaj3 - gammaj2)/step);
+        fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter3, distance_bertrand3);
+       
     else
         gammaj = gammaj + r;
     end
@@ -96,7 +99,7 @@ for i = 1:maxiter
     [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
 
 %     if i == 6; keyboard; end;
-    fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
+%     fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
    
 %     if (distance2 > lastdistance); break; end
     

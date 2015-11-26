@@ -437,7 +437,8 @@ cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 
 Data.cafe = cafe;
 ps = repmat(Data.price, [1 ns]);
-[cce, ps, gammaj0, share] = calcce(theta, deltas, cs, Data, gammaj, ps);
+settings = loadSettings;
+[cce, ps, gammaj0, share] = calcce(theta, deltas, cs, Data, gammaj, ps, settings);
 % [cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
 
 %%

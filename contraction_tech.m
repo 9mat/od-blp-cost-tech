@@ -1,4 +1,4 @@
-function [ gpm, ps, gammaj, cce, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, coef, ps, gammaj, diaryname)
+function [ gpm, ps, gammaj, cce, share ] = contraction_tech(theta, deltas, cs0, Data, cce0, cce, coef, ps, gammaj, diaryname)
 %CONTRACTION_TECH Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,7 +16,6 @@ trim05 = prctile(cce0, 3);
 trim95 = prctile(cce0, 97);
 cce0(cce0>trim95) = trim95;
 cce0(cce0<trim05) = trim05;
-cce = cce0;
 
 % make sure that coef is for log(gpm) equation, not log(mpg)
 pow = numel(coef)-1;
@@ -71,15 +70,19 @@ while ~convergence
 %     gpm = gpm.*exp(0.1*r);
     
     distance = max(abs(r/step));
-    convergence = distance < toler;
+    convergence = (distance < toler) & (settings.tolercafe <= 0.1*toler);
     iter = iter + 1;
     if iter > maxiter;
         break;
     end
+%     settings.tolercafe = max(settings.tolercafe*0.9,1e-5);
+%     settings.tolercafe = min(settings.tolercafe, 0.1*distance);
+%     step = step*0.95;
+%     step = max(step, 0.005);
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');
-    fprintf('######### Tech contraction iter #% 4d, distance = %f, elapsed time = %f secs\n', iter, distance, toc);
+    fprintf('######### Tech contraction iter #% 4d, distance = %f, elapsed time = %.1f secs\n', iter, distance, toc);
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');

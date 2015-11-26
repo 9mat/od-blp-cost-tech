@@ -1,8 +1,8 @@
 result_file = 'result-151124-234322.mat';
 
-cf_pgreal;
-cf_std;
-cf_pgstd;
+% cf_pgreal;
+% cf_std;
+% cf_pgstd;
 
 load(result_file);
 
