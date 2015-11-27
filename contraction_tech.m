@@ -12,10 +12,10 @@ convergence = false;
 
 gpm = Data.gpm;
 
-trim05 = prctile(cce0, 3);
-trim95 = prctile(cce0, 97);
-cce0(cce0>trim95) = trim95;
-cce0(cce0<trim05) = trim05;
+% trim05 = prctile(cce0, 3);
+% trim95 = prctile(cce0, 97);
+% cce0(cce0>trim95) = trim95;
+% cce0(cce0<trim05) = trim05;
 
 % make sure that coef is for log(gpm) equation, not log(mpg)
 pow = numel(coef)-1;
@@ -75,6 +75,10 @@ while ~convergence
     if iter > maxiter;
         break;
     end
+    
+%     if iter > 300
+%         settings.tolercafe = 1e-3;
+%     end
 %     settings.tolercafe = max(settings.tolercafe*0.9,1e-5);
 %     settings.tolercafe = min(settings.tolercafe, 0.1*distance);
 %     step = step*0.95;

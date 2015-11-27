@@ -9,6 +9,10 @@ gpmout = ['gpm-estimation-' runid '.txt'];
 contractionout = ['tech-contraction-' runid '.txt'];
 result_file = ['result-' runid '.mat'];
 
+if exist('parpool', 2) > 0
+    parpool;
+end
+
 %%
 global lastdelta count outshr
 
@@ -493,6 +497,49 @@ ye = -log(gpm);
 
 save(result_file);
 diary off;
+
+% %%
+% for t=1:9
+%     load(result_file);
+%     index = cdid == t;
+%     Data.Xv         = Data.Xv(index,:);
+%     Data.Xc         = Data.Xc(index,:);
+%     Data.Xrc        = Data.Xrc(index,:);
+%     Data.price      = Data.price(index);
+%     Data.share      = Data.share(index);
+%     Data.v          = Data.v(index,:,:);
+%     Data.XrcV       = Data.XrcV(index,:,:);
+%     Data.vprice     = Data.vprice(index,:);
+%     Data.ve         = Data.ve(index,:);
+%     Data.gpm        = Data.gpm(index);
+%     Data.dpm        = Data.dpm(index);
+%     Data.pgreal     = Data.pgreal(index);
+%     Data.comply     = Data.comply(index);
+%     Data.cafestd    = Data.cafestd(index);
+%     Data.cafe       = Data.cafe(index);
+%     Data.cagpm      = Data.cagpm(index);
+%     Data.cagpmstd   = Data.cagpmstd(index);
+%     Data.income09   = Data.income09(index);
+%     Data.cafe2      = Data.cafe2(index);
+%     
+%     Data.iT         = 1;
+%     [~,~,Data.iF]   = unique(Data.iF(index));
+%     [~,Data.fleetind,Data.fleet] = unique(Data.fleet(index));
+% 
+%     xi              = xi(index);
+%     xis             = xis(index,:);
+%     omega           = omega(index);
+%     omegas          = omegas(index,:);
+%     
+%     c               = c(index);
+%     cs              = cs(index,:);
+%     delta           = delta(index);
+%     deltas          = deltas(index,:);   
+%     cce             = cce(index);
+%     
+%     car             = car(index);
+% 
+% end
 
 %%
 % Data.pgreal = pgreal*0.99;

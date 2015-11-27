@@ -38,10 +38,12 @@ share = mean(ss(:,index),2);
 cce = mean(ce(:,index),2)./mean(ss(:,index),2)/10;
 
 % trim outliers
-trim05 = prctile(cce, 3);
-trim95 = prctile(cce, 97);
-cce(cce>trim95) = trim95;
-cce(cce<trim05) = trim05;
+% trim05 = prctile(cce, 3);
+% trim95 = prctile(cce, 97);
+% cce(cce>trim95) = trim95;
+% cce(cce<trim05) = trim05;
+cce(cce<0) = 0;
+cce(cce>6) = 6;
 
 end
 
