@@ -34,7 +34,7 @@ inactive = Data.comply == 1;
 gammaj(minmpg(fleet) > cafestdf(fleet)) = 0;
 gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 
-    function [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, maxiter)
+    function [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p)
         index = any(isnan(p));
         p(:,index) = p0(:,index);
         [p, margin, s, iter, ~, distance_bertrand ] ...
@@ -58,14 +58,13 @@ gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 % 
 
 stepsize = @(r,v) -norm(r)/norm(v);
-[p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
 % fprintf('     - starting distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
 tic;
 for i = 1:maxiter    
     step = 0.1;
 %     fprintf('**** CAFE iter #%5d\n', i);
-    
 
+    [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p);
     gammaj2 = gammaj;
     binding2 = maybinding; % | (inactive & (direction(fleet) < 0));
     gammaj2(binding2) = gammaj2(binding2) - step*direction(fleet(binding2));
@@ -77,13 +76,13 @@ for i = 1:maxiter
     fprintf('CAFE iter #%4d, dist = %f, bertrand iter = % 4d, dist = %f, time = %.1fs \n', i, distance, iter, distance_bertrand, toc);
     if distance < toler; break; end;
     
-    [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p, 2000);
+    [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p);
     gammaj3 = gammaj2;
     binding2 = maybinding; % | (inactive & (direction(fleet) < 0));
     gammaj3(binding2) = gammaj3(binding2) - step*direction(fleet(binding2));
     gammaj3(gammaj3 < 0) = 0;
     
-    if distance_bertrand < 1e-3
+    if distance_bertrand3 < 1e-3
         v = (gammaj3 - gammaj2) - r;
         a = stepsize(r,v);
         gammaj = gammaj - 2*a*r + a^2*v;
@@ -93,10 +92,14 @@ for i = 1:maxiter
 %         fprintf('     - 2nd step, distance = %f, bertrand iter = % 4d, dist = %f, time = %.1f secs \n', distance, iter3, distance_bertrand3);
        
     else
-        gammaj = gammaj + r;
+        if distance_bertrand < 1e-3
+            gammaj = gammaj + r*0.1;
+        else
+            gammaj(maybinding) = gammaj(maybinding).*(1 + rand(sum(maybinding,1)-0.5)*0.1);
+        end
     end
     gammaj(gammaj<0) = 0;
-    [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
+%     [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p);
 
 %     if i == 6; keyboard; end;
 %     fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);

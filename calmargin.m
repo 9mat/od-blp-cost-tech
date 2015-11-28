@@ -9,7 +9,6 @@ share = mean(s,2);
 
 sa = bsxfun(@times, s, alphai);
 meansa = mean(sa,2);
-% sa = bsxfun(@rdivide, sa, price);
 
 flag = true;
 for f=1:F
@@ -19,7 +18,15 @@ for f=1:F
 %     if (singular < eps) || isnan(singular)
 %         flag(f) = false;
 %     end
+    lastwarn('');
     margin(index) = -Delta\share(index);
+    
+    [~, warningID] = lastwarn;
+    if (strcmp(warningID, 'MATLAB:illConditionedMatrix') == 1) ...
+            || (strcmp(warningID, 'MATLAB:singularMatrix') == 1)
+        flag = false;
+        return;
+    end
 end
 
 

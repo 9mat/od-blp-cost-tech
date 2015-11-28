@@ -71,7 +71,7 @@ while ~convergence
 %     gpm = gpm.*exp(0.1*r);
     
     distance = max(abs(r/step));
-    convergence = (distance < toler) & (settings.tolercafe <= 0.1*toler);
+    convergence = (distance < toler);
     iter = iter + 1;
     if iter > maxiter;
         break;

@@ -21,7 +21,7 @@ while ~convergence
     Data.price = p;
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
-    [margin, flag] = calmargin(s, alphai, Data.iF);
+    [margin, flag1] = calmargin(s, alphai, Data.iF);
     comply_mc = calcomply_mc_j(gammaj, Data);
 
     p2 = c + margin - comply_mc;
@@ -31,7 +31,7 @@ while ~convergence
     Data.price = p2;
     mu = calmu(theta, Data);
     s = calshare(delta, exp(mu), Data.iT);
-    [margin, flag] = calmargin(s, alphai, Data.iF);
+    [margin, flag2] = calmargin(s, alphai, Data.iF);
     comply_mc = calcomply_mc_j(gammaj, Data);
 
     p3 = c + margin - comply_mc;
@@ -47,8 +47,13 @@ while ~convergence
     convergence = distance < toler;
     iter = iter + 1;
         
-    if any(isnan(p)) || (~flag)
-        p = p0.*(1 + (rand(size(p))-0.5)*0.2);
+    if any(isnan(p)) || (~flag2)
+        if any(isnan(p2)) || (~flag1)
+            p = p0.*(1 + (rand(size(p))-0.5)*0.2);
+        else
+            p = p2.*(1 + (rand(size(p))-0.5)*0.1);
+        end
+        distance = 1e30;
     end
     
     if iter > maxiter
