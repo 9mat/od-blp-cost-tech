@@ -60,10 +60,10 @@ gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 stepsize = @(r,v) -norm(r)/norm(v);
 [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p, 10000);
 % fprintf('     - starting distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
-
+tic;
 for i = 1:maxiter    
     step = 0.1;
-    fprintf('**** CAFE iter #%5d\n', i);
+%     fprintf('**** CAFE iter #%5d\n', i);
     
 
     gammaj2 = gammaj;
@@ -74,7 +74,7 @@ for i = 1:maxiter
     r = gammaj2 - gammaj;
     
     distance = max(abs(r)/step);
-    fprintf('     - 1st step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter, distance_bertrand);
+    fprintf('CAFE iter #%4d, dist = %f, bertrand iter = % 4d, dist = %f, time = %.1fs \n', i, distance, iter, distance_bertrand, toc);
     if distance < toler; break; end;
     
     [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p, 2000);
@@ -90,7 +90,7 @@ for i = 1:maxiter
 %         distance = min(distance, distance3);
         p = p2;
         distance = max(abs(gammaj3 - gammaj2)/step);
-        fprintf('     - 2nd step, distance = %f, bertrand iter = % 5d, distance = %f \n', distance, iter3, distance_bertrand3);
+%         fprintf('     - 2nd step, distance = %f, bertrand iter = % 4d, dist = %f, time = %.1f secs \n', distance, iter3, distance_bertrand3);
        
     else
         gammaj = gammaj + r;
