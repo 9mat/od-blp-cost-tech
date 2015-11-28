@@ -27,10 +27,10 @@ end
 flag = true(1,F);
 parfor f=1:F
     Delta = diag(meansac{f}) - sac{f}*sc{f}'/N;
-    singular = rcond(Delta);
-    if (singular < eps) || isnan(singular)
-        flag(f) = false;
-    end
+%     singular = rcond(Delta);
+%     if (singular < eps) || isnan(singular)
+%         flag(f) = false;
+%     end
     marginc{f} = -Delta\sharec{f};
 end
 

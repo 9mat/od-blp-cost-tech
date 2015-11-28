@@ -2,7 +2,7 @@ function cf_pgreal
 %CF_PGREAL Summary of this function goes here
 %   Detailed explanation goes here
 
-if exist('parpool', 2) > 0
+if exist('parpool') > 0
     parpool;
 end
 

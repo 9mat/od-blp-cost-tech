@@ -29,7 +29,7 @@ stepsize = @(r,v) -norm(r)/norm(v);
 gpm0 = Data.gpm;
 
 step = 0.1;
-tic;
+starttime=tic;
 while ~convergence
     if hasdiary; diary(diaryname); diary on; end;
     
@@ -49,7 +49,8 @@ while ~convergence
     
     gpm2 = gpm0.*exp(f(cce2)-f0);
     gpm2(isnan(gpm2)) = Data.gpm(isnan(gpm2));
-    
+
+    fprintf('-----------------------------------------------------------\n');
     
     change_c = (f(cce2).*cce2 - f0.*cce0 - int_f(cce2) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
@@ -86,7 +87,7 @@ while ~convergence
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');
-    fprintf('######### Tech contraction iter #% 4d, distance = %f, elapsed time = %.1f secs\n', iter, distance, toc);
+    fprintf('######### Tech contraction iter #% 4d, distance = %f, elapsed time = %.1f secs\n', iter, distance, toc(starttime));
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');
