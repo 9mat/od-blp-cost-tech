@@ -2,11 +2,12 @@ function cf_std
 %CF_STD Summary of this function goes here
 %   Detailed explanation goes here
 
-if exist('parpool') > 0
+settings = loadSettings;
+
+if (exist('parpool') > 0) && (settings.useparpool == 1)
     parpool;
 end
 
-settings = loadSettings;
 datafile = settings.result_file;
 carstd = settings.carstd;
 truckstd = settings.truckstd;

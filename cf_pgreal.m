@@ -1,12 +1,12 @@
 function cf_pgreal
 %CF_PGREAL Summary of this function goes here
 %   Detailed explanation goes here
+settings = loadSettings;
 
-if exist('parpool') > 0
+if (exist('parpool') > 0) && (settings.useparpool == 1)
     parpool;
 end
 
-settings = loadSettings;
 datafile = settings.result_file;
 newpg = settings.newpg;
 

@@ -2,11 +2,12 @@ function cf_pgstd
 %CF_PGSTD Summary of this function goes here
 %   Detailed explanation goes here
 
-if exist('parpool') > 0
+settings = loadSettings;
+
+if (exist('parpool') > 0) && (settings.useparpool == 1)
     parpool;
 end
 
-settings = loadSettings;
 datafile = settings.result_file;
 newpg = settings.newpg;
 carstd = settings.carstd;
