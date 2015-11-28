@@ -2,10 +2,6 @@ function cf_pgstd
 %CF_PGSTD Summary of this function goes here
 %   Detailed explanation goes here
 
-if exist('parpool', 2) > 0
-    parpool;
-end
-
 settings = loadSettings;
 datafile = settings.result_file;
 newpg = settings.newpg;
@@ -37,7 +33,7 @@ Data.cafestd(car==0) = truckstd;
 Data.cagpmstd = 1./Data.cafestd*100;
 
 coef = -eta(end-3:end);
-[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, coef, ps, gammaj0, diaryname);
+[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
 
 resultfile = ['cf-pgstd-' runid '.mat'];
 save(resultfile);

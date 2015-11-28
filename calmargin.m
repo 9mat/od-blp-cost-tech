@@ -11,33 +11,16 @@ sa = bsxfun(@times, s, alphai);
 meansa = mean(sa,2);
 % sa = bsxfun(@rdivide, sa, price);
 
-sharec = cell(1,F);
-sac = cell(1,F);
-sc = cell(1,F);
-meansac = cell(1,F);
-marginc = cell(1,F);
-parfor f=1:F
-    index = iF == f;
-    sharec{f} = share(index);
-    sc{f} = s(index,:);
-    sac{f} = sa(index,:);
-    meansac{f} = meansa(index);
-end
-
-flag = true(1,F);
-parfor f=1:F
-    Delta = diag(meansac{f}) - sac{f}*sc{f}'/N;
-    singular = rcond(Delta);
-    if (singular < eps) || isnan(singular)
-        flag(f) = false;
-    end
-    marginc{f} = -Delta\sharec{f};
-end
-
+flag = true;
 for f=1:F
-    margin(iF == f) = marginc{f};
+    index = iF == f;
+    Delta = diag(meansa(index)) - sa(index,:)*s(index,:)'/N;
+%     singular = rcond(Delta);
+%     if (singular < eps) || isnan(singular)
+%         flag(f) = false;
+%     end
+    margin(index) = -Delta\share(index);
 end
 
-flag = all(flag);
 
 end

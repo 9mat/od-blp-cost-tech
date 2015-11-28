@@ -9,10 +9,6 @@ gpmout = ['gpm-estimation-' runid '.txt'];
 contractionout = ['tech-contraction-' runid '.txt'];
 result_file = ['result-' runid '.mat'];
 
-if exist('parpool', 2) > 0
-    parpool;
-end
-
 %%
 global lastdelta count outshr
 

@@ -2,10 +2,6 @@ function cf_std
 %CF_STD Summary of this function goes here
 %   Detailed explanation goes here
 
-if exist('parpool', 2) > 0
-    parpool;
-end
-
 settings = loadSettings;
 datafile = settings.result_file;
 carstd = settings.carstd;
