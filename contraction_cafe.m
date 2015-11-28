@@ -95,7 +95,7 @@ for i = 1:maxiter
         if distance_bertrand < 1e-3
             gammaj = gammaj + r*0.1;
         else
-            gammaj(maybinding) = gammaj(maybinding).*(1 + rand(sum(maybinding,1)-0.5)*0.1);
+            gammaj(maybinding) = gammaj(maybinding).*(1 + (rand(sum(maybinding),1)-0.5)*0.1);
         end
     end
     gammaj(gammaj<0) = 0;

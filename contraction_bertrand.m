@@ -47,12 +47,10 @@ while ~convergence
     convergence = distance < toler;
     iter = iter + 1;
         
-    if any(isnan(p)) || (~flag2)
-        if any(isnan(p2)) || (~flag1)
-            p = p0.*(1 + (rand(size(p))-0.5)*0.2);
-        else
-            p = p2.*(1 + (rand(size(p))-0.5)*0.1);
-        end
+    index = isnan(p) | (~flag2);
+    if any(index)
+        p(index) = p0(index).*(1 + (rand(size(p(index)))-0.5)*0.2);
+        p(~index) = p(~index).*(1 + (rand(size(p(~index)))-0.5)*0.1);
         distance = 1e30;
     end
     

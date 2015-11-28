@@ -1,5 +1,9 @@
 function [margin, flag] = calmargin(s, alphai, iF)
 
+warning('error', 'MATLAB:illConditionedMatrix');
+warning('error', 'MATLAB:singularMatrix');
+warning('error', 'MATLAB:nearlySingularMatrix');
+
 F = max(iF);
 J = length(iF);
 N = size(s,2);
@@ -10,7 +14,7 @@ share = mean(s,2);
 sa = bsxfun(@times, s, alphai);
 meansa = mean(sa,2);
 
-flag = true;
+flag = true(J,1);
 for f=1:F
     index = iF == f;
     Delta = diag(meansa(index)) - sa(index,:)*s(index,:)'/N;
@@ -19,15 +23,16 @@ for f=1:F
 %         flag(f) = false;
 %     end
     lastwarn('');
-    margin(index) = -Delta\share(index);
     
-    [~, warningID] = lastwarn;
-    if (strcmp(warningID, 'MATLAB:illConditionedMatrix') == 1) ...
-            || (strcmp(warningID, 'MATLAB:singularMatrix') == 1)
-        flag = false;
-        return;
+    try
+        margin(index) = -Delta\share(index);
+    catch
+        flag(index) = false;
     end
 end
 
+warning('on', 'MATLAB:illConditionedMatrix');
+warning('on', 'MATLAB:singularMatrix');
+warning('on', 'MATLAB:nearlySingularMatrix');
 
 end
