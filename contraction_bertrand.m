@@ -47,13 +47,13 @@ while ~convergence
     convergence = distance < toler;
     iter = iter + 1;
         
-    index = isnan(p) | (~flag2);
-    if any(index)
+    
+    if any(isnan(p)) || (~flag2)
         p = p0.*(1 + (rand(size(p))-0.5)*0.2);
+        distance = 10;
     end
     
     if iter > maxiter
-        p = NaN(size(p));
         flag = -1;
         return;
     end

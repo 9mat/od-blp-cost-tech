@@ -92,11 +92,12 @@ for i = 1:maxiter
 %         fprintf('     - 2nd step, distance = %f, bertrand iter = % 4d, dist = %f, time = %.1f secs \n', distance, iter3, distance_bertrand3);
        
     else
-        if distance_bertrand < 1e-3
-            gammaj = gammaj + r*0.1;
-        else
-            gammaj(maybinding) = gammaj(maybinding).*(1 + (rand(sum(maybinding),1)-0.5)*0.1);
-        end
+        gammaj = gammaj + r*0.1;
+%         if distance_bertrand < 1e-3
+%             gammaj = gammaj + r*0.1;
+%         else
+%             gammaj(maybinding) = gammaj(maybinding).*(1 + (rand(sum(maybinding),1)-0.5)*0.1);
+%         end
     end
     gammaj(gammaj<0) = 0;
 %     [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p);
