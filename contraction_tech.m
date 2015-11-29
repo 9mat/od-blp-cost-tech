@@ -73,10 +73,7 @@ while ~convergence
     distance = max(abs(r/step));
     convergence = (distance < toler);
     iter = iter + 1;
-    if iter > maxiter;
-        break;
-    end
-    
+
 %     if iter > 300
 %         settings.tolercafe = 1e-3;
 %     end
@@ -91,6 +88,10 @@ while ~convergence
     fprintf('######### \n');
     fprintf('######### \n');
     fprintf('######### \n');
+
+    if iter > maxiter;
+        break;
+    end
     
     if hasdiary; diary off; end;
 end

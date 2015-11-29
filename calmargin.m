@@ -14,7 +14,7 @@ share = mean(s,2);
 sa = bsxfun(@times, s, alphai);
 meansa = mean(sa,2);
 
-flag = true(J,1);
+flag = true;
 for f=1:F
     index = iF == f;
     Delta = diag(meansa(index)) - sa(index,:)*s(index,:)'/N;
@@ -27,7 +27,8 @@ for f=1:F
     try
         margin(index) = -Delta\share(index);
     catch
-        flag(index) = false;
+        flag = false;
+        break;
     end
 end
 
