@@ -34,6 +34,8 @@ inactive = Data.comply == 1;
 gammaj(minmpg(fleet) > cafestdf(fleet)) = 0;
 gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 
+gammaj0 = gammaj;
+
     function [p, direction, distance, cafef, maxstep, iter, distance_bertrand] = f(gammaj, p)
         index = any(isnan(p));
         p(:,index) = p0(:,index);
@@ -82,7 +84,7 @@ for i = 1:maxiter
     gammaj3(binding2) = gammaj3(binding2) - step*direction(fleet(binding2));
     gammaj3(gammaj3 < 0) = 0;
     
-    if distance_bertrand3 < 1e-3
+    if (distance_bertrand3 < 1e-3) && (distance_bertrand < 1e-3)
         v = (gammaj3 - gammaj2) - r;
         a = stepsize(r,v);
         gammaj = gammaj - 2*a*r + a^2*v;
@@ -92,7 +94,7 @@ for i = 1:maxiter
 %         fprintf('     - 2nd step, distance = %f, bertrand iter = % 4d, dist = %f, time = %.1f secs \n', distance, iter3, distance_bertrand3);
        
     else
-        gammaj = gammaj + r*0.1;
+        gammaj = (gammaj + gammaj0)/2;
 %         if distance_bertrand < 1e-3
 %             gammaj = gammaj + r*0.1;
 %         else
