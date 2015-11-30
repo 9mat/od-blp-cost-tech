@@ -462,8 +462,8 @@ settings = loadSettings;
 % pct = zeros(size(cce));
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
-trim05 = prctile(cce, 3);
-trim95 = prctile(cce, 97);
+trim05 = 0; % prctile(cce, 3);
+trim95 = 6; % prctile(cce, 97);
 index = (cce > trim05) & (cce < trim95);
 
 torque = data(:,21);
@@ -494,48 +494,57 @@ ye = -log(gpm);
 save(result_file);
 diary off;
 
-% %%
-% for t=1:9
-%     load(result_file);
-%     index = cdid == t;
-%     Data.Xv         = Data.Xv(index,:);
-%     Data.Xc         = Data.Xc(index,:);
-%     Data.Xrc        = Data.Xrc(index,:);
-%     Data.price      = Data.price(index);
-%     Data.share      = Data.share(index);
-%     Data.v          = Data.v(index,:,:);
-%     Data.XrcV       = Data.XrcV(index,:,:);
-%     Data.vprice     = Data.vprice(index,:);
-%     Data.ve         = Data.ve(index,:);
-%     Data.gpm        = Data.gpm(index);
-%     Data.dpm        = Data.dpm(index);
-%     Data.pgreal     = Data.pgreal(index);
-%     Data.comply     = Data.comply(index);
-%     Data.cafestd    = Data.cafestd(index);
-%     Data.cafe       = Data.cafe(index);
-%     Data.cagpm      = Data.cagpm(index);
-%     Data.cagpmstd   = Data.cagpmstd(index);
-%     Data.income09   = Data.income09(index);
-%     Data.cafe2      = Data.cafe2(index);
-%     
-%     Data.iT         = 1;
-%     [~,~,Data.iF]   = unique(Data.iF(index));
-%     [~,Data.fleetind,Data.fleet] = unique(Data.fleet(index));
-% 
-%     xi              = xi(index);
-%     xis             = xis(index,:);
-%     omega           = omega(index);
-%     omegas          = omegas(index,:);
-%     
-%     c               = c(index);
-%     cs              = cs(index,:);
-%     delta           = delta(index);
-%     deltas          = deltas(index,:);   
-%     cce             = cce(index);
-%     
-%     car             = car(index);
-% 
-% end
+%%
+for t=1:9
+    load(result_file);
+    index = cdid == t;
+    
+    trance.Data.Xv         = Data.Xv(index,:);
+    trance.Data.Xrc        = Data.Xrc(index,:);
+    trance.Data.price      = Data.price(index);
+    trance.Data.share      = Data.share(index);
+    trance.Data.v          = Data.v(index,:,:);
+    trance.Data.XrcV       = Data.XrcV(index,:,:);
+    trance.Data.vprice     = Data.vprice(index,:);
+    trance.Data.ve         = Data.ve(index,:);
+    trance.Data.gpm        = Data.gpm(index);
+    trance.Data.dpm        = Data.dpm(index);
+    trance.Data.pgreal     = Data.pgreal(index);
+    trance.Data.comply     = Data.comply(index);
+    trance.Data.cafestd    = Data.cafestd(index);
+    trance.Data.cafe       = Data.cafe(index);
+    trance.Data.cagpm      = Data.cagpm(index);
+    trance.Data.cagpmstd   = Data.cagpmstd(index);
+    trance.Data.income09   = Data.income09(index);
+    trance.Data.cafe2      = Data.cafe2(index);
+    
+    trance.Data.iT         = 1;
+    [~,~,trance.Data.iF]   = unique(Data.iF(index));
+    [~,trance.Data.fleetind,Data.fleet] = unique(Data.fleet(index));
+
+    trance.xi              = xi(index);
+    trance.xis             = xis(index,:);
+    trance.omega           = omega(index);
+    trance.omegas          = omegas(index,:);
+    
+    trance.c               = c(index);
+    trance.cs              = cs(index,:);
+    trance.delta           = delta(index);
+    trance.deltas          = deltas(index,:);   
+    trance.cce             = cce(index);
+    
+    car                    = 1-suv-van-minivan-truck;
+    trance.car             = car(index);
+    
+    trance.tranceIndex     = index; 
+    trance.eta             = eta;
+    trance.theta           = theta;
+    trance.beta_v          = beta_v;
+    trance.beta_c          = beta_c;
+    
+    tranceFileName = ['trance-' num2str(t) '-' result_file];
+    save(tranceFileName, '-struct', 'trance');
+end
 
 %%
 % Data.pgreal = pgreal*0.99;
