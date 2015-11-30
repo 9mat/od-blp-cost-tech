@@ -495,9 +495,13 @@ save(result_file);
 diary off;
 
 %%
+load result-151130-182548;
 for t=1:9
     load(result_file);
     index = cdid == t;
+    
+    trance.runid           = runid;
+    trande.tranceid        = t;
     
     trance.Data.Xv         = Data.Xv(index,:);
     trance.Data.Xrc        = Data.Xrc(index,:);
@@ -518,9 +522,9 @@ for t=1:9
     trance.Data.income09   = Data.income09(index);
     trance.Data.cafe2      = Data.cafe2(index);
     
-    trance.Data.iT         = 1;
+    [~,~,trance.Data.iT]   = unique(Data.iT(index));
     [~,~,trance.Data.iF]   = unique(Data.iF(index));
-    [~,trance.Data.fleetind,Data.fleet] = unique(Data.fleet(index));
+    [~,trance.Data.fleetind,trance.Data.fleet] = unique(Data.fleet(index));
 
     trance.xi              = xi(index);
     trance.xis             = xis(index,:);
@@ -533,14 +537,22 @@ for t=1:9
     trance.deltas          = deltas(index,:);   
     trance.cce             = cce(index);
     
+    trance.mampg           = mampg(index);
+    trance.madpm_idx_rc    = madpm_idx_rc;
+    trance.madpm_idx_v     = madpm_idx_v;
+    
     car                    = 1-suv-van-minivan-truck;
     trance.car             = car(index);
+    
     
     trance.tranceIndex     = index; 
     trance.eta             = eta;
     trance.theta           = theta;
     trance.beta_v          = beta_v;
     trance.beta_c          = beta_c;
+    
+    trance.ps              = ps(index,:);
+    trance.gammaj0         = gammaj0(index);
     
     tranceFileName = ['trance-' num2str(t) '-' result_file];
     save(tranceFileName, '-struct', 'trance');

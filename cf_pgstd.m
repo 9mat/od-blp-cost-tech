@@ -1,9 +1,12 @@
-function cf_pgstd
+function cf_pgstd(trance)
+
 %CF_PGSTD Summary of this function goes here
 %   Detailed explanation goes here
 
+if ~ischar(trance); trance = num2str(trance); end
+
 settings = loadSettings;
-datafile = settings.result_file;
+datafile = ['trance-' trance '-' settings.result_file];
 newpg = settings.newpg;
 carstd = settings.carstd;
 truckstd = settings.truckstd;
@@ -14,20 +17,21 @@ if ischar(truckstd); truckstd = str2double(truckstd); end;
 
 load(datafile);
 
-diaryname = ['diary-cf-pgstd-' runid '.txt'];
+diaryname = ['diary-cf-pgstd-trance-' trance '-run-' runid '.txt'];
 
 Data.pgreal = newpg;
 madpm = 1./mampg*100*newpg;
 
-Xrc(:, madpm_idx_rc) = madpm./income09;
-Xv(:, madpm_idx_v) = madpm./income09;
+Xrc = Data.Xrc;
+Xv = Data.Xv;
+Xrc(:, madpm_idx_rc) = madpm./Data.income09;
+Xv(:, madpm_idx_v) = madpm./Data.income09;
 Data.Xv = Xv;
 Data.Xrc = Xrc;
 Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
 
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 
-car = 1-suv-truck-van-minivan;
 Data.cafestd(car==1) = carstd;
 Data.cafestd(car==0) = truckstd;
 Data.cagpmstd = 1./Data.cafestd*100;
@@ -35,7 +39,7 @@ Data.cagpmstd = 1./Data.cafestd*100;
 coef = -eta(end-3:end);
 [gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
 
-resultfile = ['cf-pgstd-' runid '.mat'];
+resultfile = ['cf-pgstd-trance-' trance '-run-' runid '.mat'];
 save(resultfile);
 
 diary off;

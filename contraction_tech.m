@@ -6,7 +6,7 @@ settings = loadSettings;
 maxiter = settings.maxitertech;
 toler = settings.tolertech;
 
-hasdiary = nargout > 8;
+hasdiary = nargin > 9;
 
 convergence = false;
 
