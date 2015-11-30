@@ -495,7 +495,7 @@ save(result_file);
 diary off;
 
 %%
-load result-151130-182548;
+load(result_file);
 for t=1:9
     load(result_file);
     index = cdid == t;
