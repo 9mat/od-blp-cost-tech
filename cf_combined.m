@@ -1,6 +1,6 @@
 settings = loadSettings;
 
-datafile = ['trance-' trance '-' settings.result_file];
+datafile = settings.result_file;
 load(datafile);
 
 combCarCAFE = NaN(9,4);
@@ -14,14 +14,28 @@ for cf_code = 1:3
     elseif cf_code == 3; cf_type = 'pgstd';
     end
     
-    for trance = 1:9
-        resultfile = ['cf-' cf_type '-trance-' trance '-run-' runid '.mat'];
+    for tranceid = 1:9
+        resultfile = ['cf-' cf_type '-trance-' num2str(tranceid) '-run-' runid '.mat'];
         if exist(resultfile, 'file') > 0
             load(resultfile);
-            combCarCAFE(trance, cf_code) = carcafe;
-            combCarMPG(trance, cf_code) = carmpg;
-            combTruckCAFE(trance, cf_code) = truckcafe;
-            combTruckMPG(trance, cf_code) = truckmpg;
+            combCarCAFE(tranceid, cf_code) = carcafe;
+            combCarMPG(tranceid, cf_code) = carmpg;
+            combTruckCAFE(tranceid, cf_code) = truckcafe;
+            combTruckMPG(tranceid, cf_code) = truckmpg;
         end
     end
+end
+
+share = data(:,4);
+mpg = data(:,9);
+gpm = 100./mpg;
+
+for tranceid = 1:9
+    index = (cdid == tranceid) && (car == 1);
+    combCarCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
+    combCarMPG(tranceid, 4) = mean(1./gpm(index));
+    
+    index = (cdid == tranceid) && (car == 0);    
+    combTruckCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
+    combTruckMPG(tranceid, 4) = mean(1./gpm(index));
 end
