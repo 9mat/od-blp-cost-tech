@@ -33,7 +33,7 @@ starttime=tic;
 while ~convergence
     if hasdiary; diary(diaryname); diary on; end;
     
-    change_c = (f(cce).*cce - f0.*cce0 - int_f(cce) + int_f0)*10;
+    change_c = -(f(cce).*cce - f0.*cce0 - int_f(cce) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
     cs = bsxfun(@plus, cs0, change_c);
     
@@ -52,7 +52,7 @@ while ~convergence
 
     fprintf('-----------------------------------------------------------\n');
     
-    change_c = (f(cce2).*cce2 - f0.*cce0 - int_f(cce2) + int_f0)*10;
+    change_c = -(f(cce2).*cce2 - f0.*cce0 - int_f(cce2) + int_f0)*10;
     change_c(isnan(change_c)) = 0;
     cs = bsxfun(@plus, cs0, change_c);
 
