@@ -1,5 +1,8 @@
 settings = loadSettings;
 
+datafile = ['trance-' trance '-' settings.result_file];
+load(datafile);
+
 combCarCAFE = NaN(9,4);
 combCarMPG = NaN(9,4);
 combTruckCAFE = NaN(9,4);
