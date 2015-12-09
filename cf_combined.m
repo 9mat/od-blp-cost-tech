@@ -29,13 +29,14 @@ end
 share = data(:,4);
 mpg = data(:,9);
 gpm = 100./mpg;
+car = 1 - suv - van - minivan - truck;
 
 for tranceid = 1:9
-    index = (cdid == tranceid) && (car == 1);
+    index = (cdid == tranceid) & (car == 1);
     combCarCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
     combCarMPG(tranceid, 4) = mean(100./gpm(index));
     
-    index = (cdid == tranceid) && (car == 0);    
+    index = (cdid == tranceid) & (car == 0);    
     combTruckCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
     combTruckMPG(tranceid, 4) = mean(100./gpm(index));
 end
