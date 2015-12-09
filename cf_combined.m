@@ -33,9 +33,9 @@ gpm = 100./mpg;
 for tranceid = 1:9
     index = (cdid == tranceid) && (car == 1);
     combCarCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
-    combCarMPG(tranceid, 4) = mean(1./gpm(index));
+    combCarMPG(tranceid, 4) = mean(100./gpm(index));
     
     index = (cdid == tranceid) && (car == 0);    
     combTruckCAFE(tranceid, 4) = sum(share(index))/sum(share(index).*gpm(index));
-    combTruckMPG(tranceid, 4) = mean(1./gpm(index));
+    combTruckMPG(tranceid, 4) = mean(100./gpm(index));
 end

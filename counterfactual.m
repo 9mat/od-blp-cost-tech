@@ -1,4 +1,4 @@
-function cf_pgstd(trance, cf_type)
+function counterfactual(trance, cf_type)
 
 %CF_PGSTD Summary of this function goes here
 %   Detailed explanation goes here
@@ -19,9 +19,16 @@ load(datafile);
 
 diaryname = ['diary-cf-' cf_type '-trance-' trance '-run-' runid '.txt'];
 
+if ~isempty(strfind(cf_type, 'ma'))
+    mampg = mampg06;
+end
+
 if ~isempty(strfind(cf_type, 'pg'))
     Data.pgreal = newpg;
-    madpm = 1./mampg*100*newpg;
+end
+
+if ~isempty(strfind(cf_type, 'ma')) || ~isempty(strfind(cf_type, 'pg'))
+    madpm = 1./mampg*100.*Data.pgreal;
 
     Xrc = Data.Xrc;
     Xv = Data.Xv;
@@ -42,6 +49,7 @@ end
 
 coef = -eta(end-3:end);
 [gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
+% [gpm1, ps1, gammaj1, cce1, share1] = broyden_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0);
 
 
 pow = numel(coef)-1;

@@ -40,6 +40,7 @@ torque      = data(:,21)/100;
 income09    = data(:,24)/1000;
 mampg       = data(:,23);
 gdppc       = data(:,22)/1000;
+mampg06     = data(:,27);
 
 
 share       = data(:,4);
@@ -538,6 +539,7 @@ for t=1:9
     trance.cce             = cce(index);
     
     trance.mampg           = mampg(index);
+    trance.mampg06         = mampg06(index);
     trance.madpm_idx_rc    = madpm_idx_rc;
     trance.madpm_idx_v     = madpm_idx_v;
     
