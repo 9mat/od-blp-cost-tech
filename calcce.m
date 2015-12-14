@@ -22,8 +22,15 @@ if nargin < 6
     ps0 = repmat(Data.price, [1 ns]);
 end
 
+Data.pgreal = Data.pgreal2;
+Data.dpm = Data.pgreal.*Data.gpm;
+madpm = 1./Data.mampg*100.*Data.pgreal;
+
+Data.Xrc(:, Data.madpm_idx_rc) = madpm./Data.income09;
+Data.Xv(:, Data.madpm_idx_v) = madpm./Data.income09;
+Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
+
 for i=1:ns
-%     [ps(:,i), mm, s, iter, flag, distance] = contraction_bertrand(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i));
     [ps(:,i), mm, s, gammajs(:,i), cafe, iter, distance] ...
         = contraction_cafe(theta, deltas(:,i), cs(:,i), Data, gammaj, ps0(:,i), settings);
     cagpm = 1./cafe*100;

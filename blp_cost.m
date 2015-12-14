@@ -41,6 +41,7 @@ income09    = data(:,24)/1000;
 mampg       = data(:,23);
 gdppc       = data(:,22)/1000;
 mampg06     = data(:,27);
+pgreal2     = data(:,28);
 
 
 share       = data(:,4);
@@ -199,8 +200,8 @@ theta0 =    [
 %    -0.4915
    
     % alpha lambda
-   -0.4*66
-   -0.3*66
+   -40
+   -15
     1
     1
     
@@ -210,6 +211,7 @@ theta0 =    [
 %     
 % %     (55/1000)/((1/27-1/28)*100) % shadow cost
     0.1
+    0.6
 ];
 
 lastdelta = delta;
@@ -245,6 +247,11 @@ Data.cafe2 = cafe2;
 Data.cafe2short = cafe2short;
 Data.fleetind = fleetind;
 
+Data.madpm_idx_rc = madpm_idx_rc;
+Data.madpm_idx_v = madpm_idx_v;
+Data.pgreal2 = pgreal2;
+Data.mampg = mampg;
+Data.car = 1 - suv - van - minivan - truck;
 
 %%
 % theta0 = [sigma0 alpha0 lambda0 sigmaprice0 sigmae0 a0 b0];
@@ -411,7 +418,7 @@ se_beta = se(numel(theta)+1:end);
 se_beta_v = se_beta(1:Kv);
 se_beta_c = se_beta(Kv+1:end);
 
-printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gamma'], 'theta se t');
+printmat([theta se_theta theta./se_theta], 'theta', [Xrc_lb ' alpha lambda sigmap sigmae gammacar gammatruck gammafined'], 'theta se t');
 printmat([beta_v se_beta_v beta_v./se_beta_v], 'beta_v', Xv_lb, 'beta_v se t');
 printmat([beta_c se_beta_c beta_c./se_beta_c], 'beta_c', Xc_lb, 'beta_c se t');
 
@@ -439,6 +446,20 @@ cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
 Data.cafe = cafe;
 ps = repmat(Data.price, [1 ns]);
 settings = loadSettings;
+
+% Data.pgreal = pgreal2;
+% Data.dpm = Data.pgreal.*Data.gpm;
+% madpm = 1./mampg*100.*Data.pgreal;
+% 
+% Xrc = Data.Xrc;
+% Xv = Data.Xv;
+% Xrc(:, madpm_idx_rc) = madpm./Data.income09;
+% Xv(:, madpm_idx_v) = madpm./Data.income09;
+% Data.Xv = Xv;
+% Data.Xrc = Xrc;
+% Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
+
+
 [cce, ps, gammaj0, share] = calcce(theta, deltas, cs, Data, gammaj, ps, settings);
 % [cce, ps, share, gammaj] = contraction_cafe(theta, deltas, cs, Data, gammaj, ps);
 
@@ -464,7 +485,7 @@ settings = loadSettings;
 % pct(iii) = (1:length(cce))'/length(cce);
 % cce = pct;
 trim05 = 0; % prctile(cce, 3);
-trim95 = 6; % prctile(cce, 97);
+trim95 = 7; % prctile(cce, 97);
 index = (cce > trim05) & (cce < trim95);
 
 torque = data(:,21);
@@ -473,7 +494,7 @@ cdiddummies(:,1) = [];
 
 xplot = sort(cce(index));
 colors = 'ymcrgbkp';
-figure('visible', 'off');
+figure('visible', 'on');
 % figure(1);
 for pow = 1:6
     poly = bsxfun(@power, cce, 0:pow);
@@ -486,7 +507,7 @@ for pow = 1:6
 end
 legend('1','2','3','4','5','6','7');
 print('gpm_poly', '-dpng');
-poly = bsxfun(@power, cce, 0:3);
+poly = bsxfun(@power, cce, 0:4);
 Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
 Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
@@ -557,7 +578,7 @@ for t=1:9
     trance.gammaj0         = gammaj0(index);
     
     tranceFileName = ['trance-' num2str(t) '-' result_file];
-    save(tranceFileName, '-struct', 'trance');
+%     save(tranceFileName, '-struct', 'trance');
 end
 
 %%
