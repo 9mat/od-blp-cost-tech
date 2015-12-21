@@ -7,6 +7,7 @@ if ~ischar(trance); trance = num2str(trance); end
 
 settings = loadSettings;
 newpg = settings.newpg;
+newpg2 = settings.newpg2;
 carstd = settings.carstd;
 truckstd = settings.truckstd;
 
@@ -23,8 +24,14 @@ if ~isempty(strfind(cf_type, 'ma'))
     mampg = mampg06;
 end
 
+Data.mampg = mampg;
+Data.madpm_idx_rc = madpm_idx_rc;
+Data.madpm_idx_v = madpm_idx_v;
+Data.pgreal = pgreal2;
+
 if ~isempty(strfind(cf_type, 'pg'))
     Data.pgreal = newpg;
+    Data.pgreal2 = newpg2;
 end
 
 if ~isempty(strfind(cf_type, 'ma')) || ~isempty(strfind(cf_type, 'pg'))
@@ -47,7 +54,7 @@ if ~isempty(strfind(cf_type, 'std'))
     Data.cagpmstd = 1./Data.cafestd*100;
 end 
 
-coef = -eta(end-3:end);
+coef = -eta(end-pow:end);
 [gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
 % [gpm1, ps1, gammaj1, cce1, share1] = broyden_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0);
 

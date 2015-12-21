@@ -22,18 +22,20 @@ p = p0;
 minmpg = accumarray(fleet, 1./Data.gpm*100, [], @min);
 maxmpg = accumarray(fleet, 1./Data.gpm*100, [], @max);
 complyf = Data.comply(Data.fleetind);
-notbinding = (minmpg > cafestdf) | (maxmpg < cafestdf);
+notbinding = (minmpg >= cafestdf) | (maxmpg <= cafestdf);
 maybinding = ~(notbinding(fleet) | (Data.comply == -1));
 
-complyf( (complyf==0) & (minmpg > cafestdf)) = 1;
-complyf( (complyf==0) & (maxmpg < cafestdf)) = -1;
-Data.comply = complyf(fleet);
+% complyf( (complyf==0) & (minmpg > cafestdf)) = 1;
+% complyf( (complyf==0) & (maxmpg < cafestdf)) = -1;
+% Data.comply = complyf(fleet);
 binding = Data.comply == 0;
 inactive = Data.comply == 1;
 
+params = getParams(theta);
+
 % gammaj((minmpg(fleet) > cafestdf(fleet)) & (Data.comply ~=-1)) = 0;
-gammaj((minmpg(fleet) > cafestdf(fleet))) = 0;
-gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
+gammaj((minmpg(fleet) >= cafestdf(fleet))) = 0;
+gammaj(maxmpg(fleet) <= cafestdf(fleet)) = params.gamma(end);
 
 gammaj0 = gammaj;
 
@@ -76,7 +78,7 @@ for i = 1:maxiter
     r = gammaj2 - gammaj;
     
     distance = max(abs(r)/step);
-    fprintf('CAFE iter #%4d, dist = %f, bertrand iter = % 4d, dist = %f, time = %.1fs \n', i, distance, iter, distance_bertrand, toc);
+%     fprintf('CAFE iter #%4d, dist = %f, bertrand iter = % 4d, dist = %f, time = %.1fs \n', i, distance, iter, distance_bertrand, toc);
     if distance < toler; break; end;
     
     [p2, direction, distance3, ~, maxstep, iter3, distance_bertrand3] = f(gammaj2, p);

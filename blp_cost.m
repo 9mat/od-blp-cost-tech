@@ -507,7 +507,8 @@ for pow = 1:6
 end
 legend('1','2','3','4','5','6','7');
 print('gpm_poly', '-dpng');
-poly = bsxfun(@power, cce, 0:4);
+pow = 4;
+poly = bsxfun(@power, cce, 0:pow);
 Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
 Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck poly];
 ye = -log(gpm);
@@ -543,6 +544,7 @@ for t=1:9
     trance.Data.cagpmstd   = Data.cagpmstd(index);
     trance.Data.income09   = Data.income09(index);
     trance.Data.cafe2      = Data.cafe2(index);
+    trance.Data.pgreal2    = pgreal2(index);
     
     [~,~,trance.Data.iT]   = unique(Data.iT(index));
     [~,~,trance.Data.iF]   = unique(Data.iF(index));
@@ -566,6 +568,7 @@ for t=1:9
     
     car                    = 1-suv-van-minivan-truck;
     trance.car             = car(index);
+    trance.pgreal2         = pgreal2(index);
     
     
     trance.tranceIndex     = index; 
@@ -578,7 +581,7 @@ for t=1:9
     trance.gammaj0         = gammaj0(index);
     
     tranceFileName = ['trance-' num2str(t) '-' result_file];
-%     save(tranceFileName, '-struct', 'trance');
+    save(tranceFileName, '-struct', 'trance');
 end
 
 %%
