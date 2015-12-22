@@ -568,6 +568,7 @@ for t=1:9
     
     car                    = 1-suv-van-minivan-truck;
     trance.car             = car(index);
+    trance.pgreal          = pgreal(index);
     trance.pgreal2         = pgreal2(index);
     
     

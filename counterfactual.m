@@ -27,7 +27,7 @@ end
 Data.mampg = mampg;
 Data.madpm_idx_rc = madpm_idx_rc;
 Data.madpm_idx_v = madpm_idx_v;
-Data.pgreal = pgreal2;
+Data.pgreal2 = pgreal2;
 
 if ~isempty(strfind(cf_type, 'pg'))
     Data.pgreal = newpg;
@@ -37,12 +37,8 @@ end
 if ~isempty(strfind(cf_type, 'ma')) || ~isempty(strfind(cf_type, 'pg'))
     madpm = 1./mampg*100.*Data.pgreal;
 
-    Xrc = Data.Xrc;
-    Xv = Data.Xv;
-    Xrc(:, madpm_idx_rc) = madpm./Data.income09;
-    Xv(:, madpm_idx_v) = madpm./Data.income09;
-    Data.Xv = Xv;
-    Data.Xrc = Xrc;
+    Data.Xrc(:, madpm_idx_rc) = madpm./Data.income09;
+    Data.Xv(:, madpm_idx_v) = madpm./Data.income09;
     Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
 
     deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
@@ -54,6 +50,7 @@ if ~isempty(strfind(cf_type, 'std'))
     Data.cagpmstd = 1./Data.cafestd*100;
 end 
 
+pow = 4;
 coef = -eta(end-pow:end);
 [gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
 % [gpm1, ps1, gammaj1, cce1, share1] = broyden_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0);
