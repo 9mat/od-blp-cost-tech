@@ -61,7 +61,7 @@ int_f0 = int_f(cce);
 Data.gpm = gpm1;
 Data.dpm = gpm1.*Data.pgreal;
 delta1 = bsxfun(@plus, Data.Xv*beta_v, xi);
-change_c = (f(cce1).*cce1 - f0.*cce - int_f(cce1) + int_f0)*10;
+change_c = -(f(cce1).*cce1 - f0.*cce - int_f(cce1) + int_f0)*10;
 change_c(isnan(change_c)) = 0;
 c1 = bsxfun(@plus, c, change_c);
 

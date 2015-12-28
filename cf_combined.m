@@ -42,3 +42,33 @@ for cf_code = 1:4
     end
 end
 
+%%
+figure;
+m = {'+-','o--','*-.','.:','x-','s--','d-.','^:','v-','>--','<-.','p:','h'};
+set(gca(), 'LineStyleOrder',m, 'ColorOrder',[0 0 0], 'NextPlot','replacechildren');
+plot(1:9, combCarCAFE);
+title('Car CAFE');
+legend(cf_types, 'Location', 'northwest');
+print(['./fig/carcafe-' runid '.png'], '-dpng');
+
+figure;
+set(gca(), 'LineStyleOrder',m, 'ColorOrder',[0 0 0], 'NextPlot','replacechildren');
+plot(1:9, combCarMPG);
+title('Car average MPG');
+legend(cf_types, 'Location', 'northwest');
+print(['./fig/carmpg-' runid '.png'], '-dpng');
+
+figure;
+set(gca(), 'LineStyleOrder',m, 'ColorOrder',[0 0 0], 'NextPlot','replacechildren');
+plot(1:9, combTruckCAFE);
+title('Truck CAFE');
+legend(cf_types, 'Location', 'northwest');
+print(['./fig/truckcafe-' runid '.png'], '-dpng');
+
+figure;
+set(gca(), 'LineStyleOrder',m, 'ColorOrder',[0 0 0], 'NextPlot','replacechildren');
+plot(1:9, combTruckMPG);
+title('Truck Average CAFE');
+legend(cf_types, 'Location', 'northwest');
+print(['./fig/truckmpg-' runid '.png'], '-dpng');
+
