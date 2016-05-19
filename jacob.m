@@ -13,7 +13,7 @@ ve = permute(Data.ve, [1 3 2]);
 iT = Data.iT;
 
 J = size(s,1);
-K = numel(theta);
+K = numel(theta)-1;
 N = size(v,3);
 
 jab = zeros([J, K]);
@@ -52,10 +52,15 @@ for t = 1:max(iT)
     %
     
     derMuSigma = bsxfun(@times, xx, vv);
-    derMuAlpha = bsxfun(@times, exp(vp*params.sigmap), Data.price);
-    derMuLambda = bsxfun(@times, exp(ve*params.sigmae), Data.dpm);
-    derMuSigmap = params.alpha*bsxfun(@times, derMuAlpha, Data.vprice);
-    derMuSigmae = params.lambda*bsxfun(@times, derMuLambda, Data.ve);
+    derMuAlpha = bsxfun(@times, exp(vp(index,:)*params.sigmap), Data.price(index,:)./Data.income09(index));
+    derMuLambda = bsxfun(@times, exp(ve(index,:)*params.sigmae), Data.dpm(index,:)./Data.income09(index));
+    derMuSigmap = params.alpha*bsxfun(@times, derMuAlpha, Data.vprice(index,:));
+    derMuSigmae = params.lambda*bsxfun(@times, derMuLambda, Data.ve(index,:));
+    
+    derMuAlpha = permute(derMuAlpha, [1 3 2]);
+    derMuLambda = permute(derMuLambda, [1 3 2]);
+    derMuSigmap = permute(derMuSigmap, [1 3 2]);
+    derMuSigmae = permute(derMuSigmae, [1 3 2]);
     
     derMuTheta = cat(2, derMuSigma, derMuAlpha, derMuLambda, derMuSigmap, derMuSigmae);
     

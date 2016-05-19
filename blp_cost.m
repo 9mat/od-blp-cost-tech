@@ -57,7 +57,7 @@ count = 0;
 rng('default');
 
 % number of random draws per market
-N = 50;
+N = 500;
 
 [T, ~, iT] = unique(cdid);
 [F, ~, iF] = unique([cdid, firmid], 'rows');
@@ -248,11 +248,11 @@ Data.fleetind = fleetind;
 
 %%
 % theta0 = [sigma0 alpha0 lambda0 sigmaprice0 sigmae0 a0 b0];
-% solveropts = nloptset('algorithm', 'LN_BOBYQA');
-% optObj = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
-%     'maxtime', 1e5, 'solver', 'NLOPT', 'solverOpts', solveropts);
+solveropts = nloptset('algorithm', 'LN_BOBYQA');
+optObj = optiset('display', 'iter', 'tolrfun', 1e-12, 'tolafun', 1e-12,...
+    'maxtime', 1e5, 'solver', 'NLOPT', 'solverOpts', solveropts);
 % 
-% optObjIP = optiset('display', 'iter', 'tolrfun', 1e-6, 'tolafun', 1e-6,...
+% optObjIP = optiset('display', 'iter', 'tolrfun', 1e-8, 'tolafun', 1e-8,...
 %     'maxtime', 1e5, 'solver', 'NLOPT');
 
 % thetalb = -10*ones(size(theta0));
@@ -280,13 +280,13 @@ diary(estout);
 diary on;
 
 options = optimset('Display', 'iter', 'MaxFunEvals', 40000, 'TolFun', 1e-8, 'TolX', 1e-8, 'MaxIter', 400);
-[thetaIP, fval] = fminsearch(@(x) gmmcost(x, Data),  theta0, options); % [], [], [], [], thetalb, thetaub, [], options);
-[thetaIP, fval] = fminunc(@(x) gmmcost(x, Data),  thetaIP, options); % [], [], [], [], thetalb, thetaub, [], options);
+% [thetaIP, fval] = fminsearch(@(x) gmmcost(x, Data),  theta0, options); % [], [], [], [], thetalb, thetaub, [], options);
+% [thetaIP, fval] = fminunc(@(x) gmmcost(x, Data),  thetaIP, options); % [], [], [], [], thetalb, thetaub, [], options);
 
-% OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
-%     'lb', thetalb, 'ub', thetaub, 'options', optObjIP);
-% 
-% [thetaIP, fvalIP] = solve(OptIP);
+OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', theta0, ...
+    'lb', thetalb, 'ub', thetaub, 'options', optObj);
+
+[thetaIP, fvalIP] = solve(OptIP);
 
 % thetaIP = thetaIP.*(1 + (rand(size(thetaIP))-0.5)*0.2);
 % OptIP = opti('fun', @(x) gmmcost(x, Data), 'x0', thetaIP, ...
@@ -431,8 +431,11 @@ diary on;
 ns = 1;
 % xis = xi(randi(J, [J,ns]));
 % omegas = omega(randi(J, [J,ns]));
-xis = zeros([J ns]);
-omegas = zeros([J ns]);
+% xis = zeros([J ns]);
+% omegas = zeros([J ns]);
+
+xis = xi;
+omegas = omega;
 
 deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
 cs = exp(bsxfun(@plus, Xc*beta_c, omegas));
@@ -496,7 +499,7 @@ res_control = cce - Ze*beta_control;
 % figure(1);
 for pow = 1:7
     poly = bsxfun(@power, cce, 0:pow);
-    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control cdiddummies poly];
+    Xe = [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control res_control.^2 res_control.^3 cdiddummies poly];
     ye = -log(gpm);
     eta = ols(Xe(index,:),ye(index));
 %     eta = tsls(Xe(index,:),ye(index), Ze(index,:));
@@ -508,9 +511,9 @@ legend('order 1','order 2','order 3','order 4','order 5','order 6', 'order 7', '
 xlabel('$c^e$','Interpreter','LaTex', 'FontSize', 16)
 ylabel('$e(c^e)$','Interpreter','LaTex', 'FontSize', 16)
 print('gpm_poly', '-dpng');
-poly = bsxfun(@power, cce, 0:3);
-Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
-Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control cdiddummies poly];
+poly = bsxfun(@power, cce, 0:2);
+Xe_lb = ['log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control res_control2 res_control3 2 3 4 5 6 7 8 9 const cce cce^2 cce^3 cce^4 cce^5'];
+Xe =  [log(hpwt) log(weight) log(space) log(torque) suv minivan van truck res_control res_control.^2 res_control.^3 cdiddummies poly];
 ye = -log(gpm);
 [eta, se] = ols(Xe(index,:), ye(index), Xe_lb);
 % [eta, se] = tsls(Xe(index,:),ye(index), Ze(index,:),Xe_lb);

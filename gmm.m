@@ -7,7 +7,7 @@ function [obj, deriv] = gmm(theta, Data)
 if any(isnan(delta))
     fprintf(' *** invert delta overflow\n');
     obj = 1e30;
-    deriv = 1e30*ones(size(theta));
+    deriv = 1e30*ones(size(theta) - [1,0]);
     return
 end
 
@@ -24,9 +24,10 @@ xiZ = xi'*Z;
 obj = xiZ/ZZ*xiZ';
 
 if nargout > 1
-	jab = jacob2(s, Data);
+	jab = jacob(theta, Data);
 	dxi = jab - X*((XZZZ*XZ')\(XZZZ*Z'*jab));
 	deriv = 2*xiZ/ZZ*Z'*dxi;
+    deriv = deriv';
 end
 
 end

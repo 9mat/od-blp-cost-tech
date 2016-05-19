@@ -19,37 +19,52 @@ load(datafile);
 
 diaryname = ['diary-cf-' cf_type '-trance-' trance '-run-' runid '.txt'];
 
-if ~isempty(strfind(cf_type, 'ma'))
-    mampg = mampg06;
-end
+oldpg = Data.pgreal;
+oldstd = Data.cafestd;
+oldmampg = mampg;
 
-if ~isempty(strfind(cf_type, 'pg'))
-    Data.pgreal = newpg;
-end
+nsteps = 30;
+cce0 = cce;
 
-if ~isempty(strfind(cf_type, 'ma')) || ~isempty(strfind(cf_type, 'pg'))
-    madpm = 1./mampg*100.*Data.pgreal;
+for step = 1:nsteps
+    prop = step/nsteps;
+    if ~isempty(strfind(cf_type, 'ma'))
+        mampg = prop*mampg06 + (1-prop)*oldmampg;
+    end
+    
+    if ~isempty(strfind(cf_type, 'pg'))
+        Data.pgreal = prop*newpg + (1-prop)*oldpg;
+    end
+    
+    if ~isempty(strfind(cf_type, 'ma')) || ~isempty(strfind(cf_type, 'pg'))
+        madpm = 1./mampg*100.*Data.pgreal;
+        
+        Xrc = Data.Xrc;
+        Xv = Data.Xv;
+        Xrc(:, madpm_idx_rc) = madpm./Data.income09;
+        Xv(:, madpm_idx_v) = madpm./Data.income09;
+        Data.Xv = Xv;
+        Data.Xrc = Xrc;
+        Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
+        
+        deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
+    end
+    
+    if ~isempty(strfind(cf_type, 'std'))
+        Data.cafestd(car==1) = prop*carstd + (1-prop)*oldstd(car==1);
+        Data.cafestd(car==0) = prop*truckstd + (1-prop)*oldstd(car==0);
+        Data.cagpmstd = 1./Data.cafestd*100;
+    end
 
-    Xrc = Data.Xrc;
-    Xv = Data.Xv;
-    Xrc(:, madpm_idx_rc) = madpm./Data.income09;
-    Xv(:, madpm_idx_v) = madpm./Data.income09;
-    Data.Xv = Xv;
-    Data.Xrc = Xrc;
-    Data.XrcV = bsxfun(@times, Data.Xrc, Data.v);
-
-    deltas = bsxfun(@plus, Data.Xv*beta_v, xis);
-end
-
-if ~isempty(strfind(cf_type, 'std'))
-    Data.cafestd(car==1) = carstd;
-    Data.cafestd(car==0) = truckstd;
-    Data.cagpmstd = 1./Data.cafestd*100;
-end 
-
-coef = -eta(end-3:end);
-[gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0, diaryname);
+    coef = -eta(end-3:end);
+    [gpm1, ps1, gammaj1, cce1, share1] = contraction_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce0, cce, coef, ps, gammaj0, diaryname);
 % [gpm1, ps1, gammaj1, cce1, share1] = broyden_tech(theta, deltas(:,1:1), cs(:,1:1), Data, cce, cce, coef, ps, gammaj0);
+    cce = cce1;
+    gammaj0 = gammaj1;
+    ps = ps1;
+    
+    fprintf(' *** Finish round %d of counterfactual\n', step);
+end
 
 
 pow = numel(coef)-1;

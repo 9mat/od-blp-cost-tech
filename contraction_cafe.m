@@ -31,7 +31,7 @@ Data.comply = complyf(fleet);
 binding = Data.comply == 0;
 inactive = Data.comply == 1;
 
-gammaj((minmpg(fleet) > cafestdf(fleet)) & (Data.comply ~=-1)) = 0;
+% gammaj((minmpg(fleet) > cafestdf(fleet)) & (Data.comply ~=-1)) = 0;
 gammaj(maxmpg(fleet) < cafestdf(fleet)) = mean(gammaj(Data.comply==-1));
 
 gammaj0 = gammaj;
